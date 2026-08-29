@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bankareikningar</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --navy:#20456d;
+    --navy-text:#16395a;
+    --green:#2e9e5f;
+    --divider:#e6e9ed;
+    --muted:#7a8794;
+  }
+  html,body{ height:100%; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#fff; color:var(--navy-text);
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+  .serif{ font-family:Georgia,"Times New Roman",serif; }
+
+  /* ---- Header ---- */
+  .header{
+    background:var(--navy); color:#fff; padding:14px 22px 26px;
+    flex-shrink:0;
+  }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    height:44px; margin-bottom:22px;
+  }
+  .topbar .title{ font-size:20px; font-weight:700; }
+  .icon-btn{
+    background:none; border:none; color:#fff; font-size:24px;
+    width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .acct-name{ font-size:38px; font-weight:400; line-height:1.1; }
+  .acct-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .acct-num{ font-size:19px; color:#c7d2dd; margin-top:8px; letter-spacing:.5px; }
+  .dots{
+    border:1.5px solid rgba(255,255,255,.5); border-radius:9px;
+    width:58px; height:44px; font-size:22px; letter-spacing:2px;
+    display:flex; align-items:center; justify-content:center;
+    background:none; color:#fff; cursor:pointer; flex-shrink:0;
+  }
+  .hr{ height:1px; background:rgba(255,255,255,.18); margin:22px 0 20px; }
+  .balances{ display:flex; }
+  .bal{ flex:1; }
+  .bal .lbl{ font-size:19px; color:#c7d2dd; margin-bottom:8px; }
+  .bal .amt{ font-size:28px; font-weight:400; }
+  .bal .amt .cur{ font-size:16px; color:#c7d2dd; margin-left:4px; }
+
+  /* ---- Tímabil ---- */
+  .timabil{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 22px; font-weight:700; flex-shrink:0;
+    border-bottom:1px solid var(--divider);
+  }
+  .timabil .right{ display:flex; align-items:center; gap:10px; color:var(--navy-text); }
+
+  /* ---- Search ---- */
+  .search-wrap{ padding:22px 22px 6px; flex-shrink:0; }
+  .search{
+    width:100%; border:1.5px solid #ccd3da; border-radius:6px;
+    padding:18px 20px; font-size:19px; color:var(--navy-text);
+    outline:none;
+  }
+  .search::placeholder{ color:#9aa6b1; }
+
+  /* ---- Transactions ---- */
+  .tx-list{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 22px 40px; }
+  .tx{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:22px 0; border-bottom:1px solid var(--divider); gap:12px;
+  }
+  .tx .name{ font-size:21px; font-weight:700; color:var(--navy-text); }
+  .tx .date{ font-size:18px; color:#33556f; margin-top:6px; }
+  .tx .r{ text-align:right; white-space:nowrap; }
+  .tx .val{ font-size:21px; font-weight:700; }
+  .tx .val.pos{ color:var(--green); }
+  .tx .val.neg{ color:var(--navy-text); }
+  .tx .sub{ font-size:18px; color:#33556f; margin-top:6px; }
+
+  /* ---- Secret editor ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.45);
+    display:none; align-items:flex-end; z-index:50;
+  }
+  .overlay.open{ display:flex; }
+  .sheet{
+    background:#fff; width:100%; border-radius:20px 20px 0 0;
+    padding:24px 22px 34px; box-shadow:0 -8px 30px rgba(0,0,0,.2);
+    animation:up .22s ease; max-height:88vh; overflow-y:auto;
+  }
+  @keyframes up{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
+  .sheet h2{ font-size:22px; color:var(--navy-text); margin-bottom:4px; }
+  .sheet .hint{ font-size:14px; color:var(--muted); margin-bottom:20px; }
+  .field{ margin-bottom:18px; }
+  .field label{ display:block; font-size:15px; font-weight:700; color:var(--navy-text); margin-bottom:8px; }
+  .field input{
+    width:100%; border:1.5px solid #ccd3da; border-radius:8px;
+    padding:14px 16px; font-size:18px; color:var(--navy-text); outline:none;
+  }
+  .field input:focus{ border-color:var(--navy); }
+  .checkrow{ display:flex; align-items:center; gap:10px; margin-bottom:22px; font-size:15px; color:var(--navy-text); }
+  .checkrow input{ width:20px; height:20px; }
+  .divider-lbl{ font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:6px 0 14px; }
+  .addgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .addgrid .full{ grid-column:1 / -1; }
+  .btn{
+    width:100%; border:none; border-radius:10px; padding:16px;
+    font-size:17px; font-weight:700; cursor:pointer; margin-top:6px;
+  }
+  .btn.primary{ background:var(--navy); color:#fff; }
+  .btn.ghost{ background:#eef1f4; color:var(--navy-text); margin-top:10px; }
+  .btn.small{ padding:12px; font-size:15px; }
+</style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="topbar">
+      <button class="icon-btn">&#8592;</button>
+      <div class="title">Bankareikningar</div>
+      <button class="icon-btn">&#9776;</button>
+    </div>
+
+    <div class="acct-row">
+      <div>
+        <div class="acct-name serif" id="acctName">Garðar sparibanki</div>
+        <div class="acct-num" id="acctNum">0123-15-148641</div>
+      </div>
+      <button class="dots" id="dotsBtn">&#8943;</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="balances">
+      <div class="bal">
+        <div class="lbl">Staða</div>
+        <div class="amt"><span id="balText">58.240.750</span><span class="cur">ISK</span></div>
+      </div>
+      <div class="bal">
+        <div class="lbl">Ráðstöfun</div>
+        <div class="amt"><span id="availText">58.240.750</span><span class="cur">ISK</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TÍMABIL -->
+  <div class="timabil">
+    <span>Tímabil</span>
+    <span class="right">1 ár &#128197;</span>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <input class="search" id="search" placeholder="Leita að færslu">
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="tx-list" id="txList"></div>
+
+  <!-- SECRET EDITOR -->
+  <div class="overlay" id="overlay">
+    <div class="sheet">
+      <h2>Stillingar</h2>
+      <div class="hint">Falið — breyttu tölunum hér.</div>
+
+      <div class="field">
+        <label>Staða (ISK)</label>
+        <input type="text" inputmode="numeric" id="editBal" placeholder="58240750">
+      </div>
+
+      <div class="field">
+        <label>Ráðstöfun (ISK)</label>
+        <input type="text" inputmode="numeric" id="editAvail" placeholder="58240750">
+      </div>
+
+      <div class="checkrow">
+        <input type="checkbox" id="syncAvail" checked>
+        <label for="syncAvail" style="margin:0;font-weight:400;">Láta Ráðstöfun fylgja Stöðu</label>
+      </div>
+
+      <div class="field">
+        <label>Nafn reiknings</label>
+        <input type="text" id="editName" placeholder="Garðar sparibanki">
+      </div>
+
+      <div class="divider-lbl">Bæta við færslu</div>
+      <div class="addgrid">
+        <input class="search full" style="padding:12px 14px;font-size:16px" type="text" id="txName" placeholder="Nafn">
+        <input class="search" style="padding:12px 14px;font-size:16px" type="text" id="txDate" placeholder="dd.mm.áááá">
+        <input class="search" style="padding:12px 14px;font-size:16px" type="text" inputmode="numeric" id="txAmt" placeholder="50000 eða -2000">
+      </div>
+      <button class="btn ghost small" id="addTx">+ Bæta við færslu</button>
+
+      <button class="btn primary" id="saveBtn">Vista</button>
+      <button class="btn ghost" id="closeBtn">Loka</button>
+    </div>
+  </div>
+
+<script>
+  // ---- state ----
+  let balance = 58240750;
+  let available = 58240750;
+  let acctName = "Garðar sparibanki";
+
+  let txs = [
+    { name:"Garðar Freyr Valdimarsso",  date:"24.08.2026", amt:50000 },
+    { name:"Garðar Freyr Valdimarsso",  date:"23.08.2026", amt:50000 },
+    { name:"Garðar Freyr Valdimarsson", date:"20.08.2026", amt:-2000 },
+    { name:"Garðar Freyr Valdimarsson", date:"18.08.2026", amt:-10000 },
+    { name:"Kort - Hlöllabátar",        date:"17.08.2026", amt:-2890 },
+    { name:"Launagreiðsla",             date:"15.08.2026", amt:420000 },
+    { name:"Netflix",                   date:"14.08.2026", amt:-2490 },
+    { name:"Garðar Freyr Valdimarsson", date:"12.08.2026", amt:-25000 },
+    { name:"Kort - Bónus",              date:"11.08.2026", amt:-8740 },
+    { name:"Millifærsla",               date:"09.08.2026", amt:150000 },
+    { name:"Kort - Costco",             date:"06.08.2026", amt:-19350 },
+    { name:"Spotify",                   date:"04.08.2026", amt:-1490 },
+    { name:"Garðar Freyr Valdimarsson", date:"01.08.2026", amt:-40000 },
+    { name:"Launagreiðsla",             date:"15.07.2026", amt:420000 },
+    { name:"Kort - N1",                 date:"12.07.2026", amt:-9200 },
+  ];
+
+  // ---- helpers ----
+  function fmt(n){
+    const neg = n < 0;
+    const s = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (neg ? "-" : "") + s;
+  }
+  function render(){
+    document.getElementById("balText").textContent = fmt(balance);
+    document.getElementById("availText").textContent = fmt(available);
+    document.getElementById("acctName").textContent = acctName;
+    renderTx();
+  }
+  function renderTx(){
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    const list = document.getElementById("txList");
+    list.innerHTML = "";
+    txs.filter(t => t.name.toLowerCase().includes(q) || t.date.includes(q))
+      .forEach(t => {
+        const pos = t.amt >= 0;
+        const div = document.createElement("div");
+        div.className = "tx";
+        div.innerHTML =
+          '<div><div class="name">'+t.name+'</div><div class="date">'+t.date+'</div></div>'+
+          '<div class="r"><div class="val '+(pos?"pos":"neg")+'">'+fmt(t.amt)+' ISK</div>'+
+          '<div class="sub">Millifært</div></div>';
+        list.appendChild(div);
+      });
+  }
+  function parseNum(v){
+    const n = parseInt((v||"").toString().replace(/[^\d-]/g,""),10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // ---- secret editor ----
+  const overlay = document.getElementById("overlay");
+  document.getElementById("dotsBtn").addEventListener("click", () => {
+    document.getElementById("editBal").value = balance;
+    document.getElementById("editAvail").value = available;
+    document.getElementById("editName").value = acctName;
+    overlay.classList.add("open");
+  });
+  document.getElementById("closeBtn").addEventListener("click", () => overlay.classList.remove("open"));
+  overlay.addEventListener("click", e => { if(e.target === overlay) overlay.classList.remove("open"); });
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    balance = parseNum(document.getElementById("editBal").value);
+    if (document.getElementById("syncAvail").checked){
+      available = balance;
+    } else {
+      available = parseNum(document.getElementById("editAvail").value);
+    }
+    const nm = document.getElementById("editName").value.trim();
+    if (nm) acctName = nm;
+    render();
+    overlay.classList.remove("open");
+  });
+
+  document.getElementById("addTx").addEventListener("click", () => {
+    const name = document.getElementById("txName").value.trim() || "Millifært";
+    const date = document.getElementById("txDate").value.trim() || "";
+    const amt  = parseNum(document.getElementById("txAmt").value);
+    txs.unshift({ name, date, amt });
+    document.getElementById("txName").value = "";
+    document.getElementById("txDate").value = "";
+    document.getElementById("txAmt").value = "";
+    renderTx();
+  });
+
+  document.getElementById("search").addEventListener("input", renderTx);
+
+  render();
+</script>
+</body>
+</html>
