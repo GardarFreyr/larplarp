@@ -2,302 +2,1384 @@
 <html lang="is">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Bankareikningar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Landsbankinn</title>
+
+<!-- iOS app look -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Landsbankinn">
+<meta name="theme-color" content="#1f4568">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   :root{
-    --navy:#20456d;
-    --navy-text:#16395a;
+    --navy:#1f4568;
+    --navy-deep:#1c3f5f;
+    --ink:#16395a;
+    --blue:#2a6ca8;
+    --red:#e8112d;
     --green:#2e9e5f;
-    --divider:#e6e9ed;
+    --line:#e3e7ea;
     --muted:#7a8794;
+    --grey-bg:#dfe5e9;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --serif:'Source Serif 4',Charter,Georgia,'Times New Roman',serif;
+    --safe-t:env(safe-area-inset-top,0px);
+    --safe-b:env(safe-area-inset-bottom,0px);
   }
-  html,body{ height:100%; }
+  html,body{ height:100%; overscroll-behavior:none; }
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:#fff; color:var(--navy-text);
-    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+    font-family:var(--sans); background:var(--navy); color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+    overflow:hidden;
   }
-  .serif{ font-family:Georgia,"Times New Roman",serif; }
+  input{ -webkit-user-select:text; user-select:text; font-family:var(--sans); }
+  button{ font-family:var(--sans); cursor:pointer; }
 
-  /* ---- Header ---- */
-  .header{
-    background:var(--navy); color:#fff; padding:14px 22px 26px;
-    flex-shrink:0;
+  #app{ position:fixed; inset:0; overflow:hidden; background:#fff; }
+
+  .screen{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    background:#fff; visibility:hidden; transform:translateX(100%);
+    transition:transform .28s cubic-bezier(.32,.72,0,1), visibility .28s;
   }
-  .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    height:44px; margin-bottom:22px;
+  .screen.active{ visibility:visible; transform:translateX(0); }
+  .screen.behind{ visibility:visible; transform:translateX(-24%); }
+  .screen.noanim{ transition:none; }
+
+  /* ---------- Header ---------- */
+  .hdr{ background:var(--navy); color:#fff; flex-shrink:0; padding-top:calc(var(--safe-t) + 8px); }
+  .hdr-row{ display:flex; align-items:center; justify-content:space-between; height:56px; padding:0 18px; gap:8px; }
+  .hdr-title{ font-size:21px; font-weight:700; letter-spacing:-.2px; }
+  .hdr-mid{ position:absolute; left:0; right:0; text-align:center; pointer-events:none; font-size:21px; font-weight:700; }
+  .hdr-row.rel{ position:relative; }
+  .iconbtn{
+    background:none; border:none; color:#fff; width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
-  .topbar .title{ font-size:20px; font-weight:700; }
-  .icon-btn{
-    background:none; border:none; color:#fff; font-size:24px;
-    width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-  }
-  .acct-name{ font-size:38px; font-weight:400; line-height:1.1; }
-  .acct-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-  .acct-num{ font-size:19px; color:#c7d2dd; margin-top:8px; letter-spacing:.5px; }
-  .dots{
-    border:1.5px solid rgba(255,255,255,.5); border-radius:9px;
-    width:58px; height:44px; font-size:22px; letter-spacing:2px;
+  .iconbtn svg{ display:block; }
+  .iconbtn:active{ opacity:.55; }
+  .logo{ width:38px; height:37px; flex-shrink:0; display:block; }
+  .logo.big{ width:230px; height:224px; }
+  .spacer{ width:44px; flex-shrink:0; }
+
+  /* ---------- Splash ---------- */
+  #splash{
+    position:fixed; inset:0; z-index:200; background:var(--navy);
     display:flex; align-items:center; justify-content:center;
-    background:none; color:#fff; cursor:pointer; flex-shrink:0;
+    transition:opacity .45s ease;
   }
-  .hr{ height:1px; background:rgba(255,255,255,.18); margin:22px 0 20px; }
-  .balances{ display:flex; }
-  .bal{ flex:1; }
-  .bal .lbl{ font-size:19px; color:#c7d2dd; margin-bottom:8px; }
-  .bal .amt{ font-size:28px; font-weight:400; }
-  .bal .amt .cur{ font-size:16px; color:#c7d2dd; margin-left:4px; }
+  #splash.gone{ opacity:0; pointer-events:none; }
+  #splash .logo.big{ animation:pop .5s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes pop{ from{ transform:scale(.86); opacity:0; } to{ transform:scale(1); opacity:1; } }
 
-  /* ---- Tímabil ---- */
+  /* ---------- Home ---------- */
+  .summary{ background:#fff; padding:26px 22px 22px; flex-shrink:0; }
+  .summary h1{ font-family:var(--serif); font-size:31px; font-weight:600; letter-spacing:-.2px; }
+  .rule{ width:34px; height:3px; background:var(--ink); margin:14px 0 18px; border-radius:2px; }
+  .sumrow{ display:flex; align-items:baseline; justify-content:space-between; padding:9px 0; }
+  .sumrow .k{ font-size:19px; font-weight:700; color:var(--ink); }
+  .sumrow .v{ font-size:19px; font-weight:500; color:var(--ink); }
+  .sumrow.sub .k,.sumrow.sub .v{ font-weight:400; color:#3d5f7d; }
+  .sumrow.sub{ padding-top:2px; }
+
+  .greyfill{ flex:1; background:var(--grey-bg); padding:18px 16px 0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .card{
+    background:#fff; border-radius:5px; padding:22px 20px; margin-bottom:14px;
+    display:flex; align-items:center; gap:18px;
+  }
+  .card:active{ background:#f5f7f8; }
+  .card .ci{ flex-shrink:0; color:var(--ink); }
+  .card .ct{ font-size:21px; font-weight:700; color:var(--ink); }
+  .card .cs{ font-size:17px; color:#3d5f7d; margin-top:4px; }
+
+  .fab{
+    position:absolute; right:16px; bottom:calc(var(--safe-b) + 18px);
+    background:var(--blue); color:#fff; border:none; border-radius:40px;
+    height:64px; display:flex; align-items:center; padding:0 6px 0 30px;
+    font-size:21px; font-weight:500; box-shadow:0 6px 18px rgba(0,0,0,.18);
+  }
+  .fab:active{ background:#245f95; }
+  .fab .bar{ width:1px; height:34px; background:rgba(255,255,255,.5); margin:0 4px 0 26px; }
+  .fab .dots{ padding:0 20px; font-size:22px; letter-spacing:2px; }
+
+  /* ---------- Accounts list ---------- */
+  .userrow{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 22px; border-bottom:1px solid var(--line); flex-shrink:0; background:#fff;
+  }
+  .userrow .u{ font-size:19px; color:var(--ink); white-space:nowrap; overflow:hidden; }
+  .userrow .a{ font-size:19px; color:var(--ink); display:flex; align-items:center; gap:12px; flex-shrink:0; padding-left:14px; }
+  .userrow .a .dots{ font-size:22px; letter-spacing:2px; }
+
+  .scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#fff; padding-bottom:20px; }
+  .sect{ padding:26px 22px 0; }
+  .sect h2{ font-family:var(--serif); font-size:25px; font-weight:600; color:var(--ink); padding-bottom:12px; }
+  .sect .underline{ height:2px; background:var(--ink); }
+  .acct{ padding:20px 22px; border-bottom:1px solid var(--line); }
+  .acct:active{ background:#f6f8f9; }
+  .acct .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .acct .nm{ font-size:21px; font-weight:700; color:var(--ink); line-height:1.25; min-width:0; }
+  .acct .no{ font-size:18px; color:#8fa3b3; margin-top:4px; }
+  .acct .dots{ font-size:22px; letter-spacing:2px; color:var(--ink); line-height:1; }
+  .acct .bot{ display:flex; align-items:baseline; justify-content:space-between; margin-top:14px; }
+  .acct .bot .l{ font-size:19px; color:var(--ink); }
+  .acct .bot .r{ font-size:21px; font-weight:700; color:var(--ink); white-space:nowrap; padding-left:12px; }
+
+  .tabbar{
+    flex-shrink:0; background:#eef1f3; border-top:1px solid #dfe4e7;
+    display:flex; align-items:flex-start; justify-content:space-around;
+    padding:10px 0 calc(var(--safe-b) + 10px); position:relative;
+  }
+  .tab{ background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:6px; width:34%; color:#4a6d8a; padding-top:6px; position:relative; }
+  .tab .lb{ font-size:15px; }
+  .tab.on{ color:var(--blue); }
+  .tab.on::before{ content:""; position:absolute; top:-10px; left:22%; right:22%; height:3px; background:var(--blue); border-radius:2px; }
+  .plus{
+    width:76px; height:76px; border-radius:50%; background:#fff; border:1px solid #dfe4e7;
+    display:flex; align-items:center; justify-content:center; margin-top:-26px;
+    box-shadow:0 2px 6px rgba(0,0,0,.06); color:var(--ink); font-size:34px; font-weight:300;
+  }
+
+  /* ---------- Detail ---------- */
+  .dtl-head{ background:var(--navy); color:#fff; padding:0 22px 26px; flex-shrink:0; }
+  .acct-name{ font-family:var(--serif); font-size:37px; font-weight:400; line-height:1.08; letter-spacing:-.5px; }
+  .acct-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding-top:20px; }
+  .acct-num{ font-size:19px; color:#c1d0dc; margin-top:8px; letter-spacing:.4px; }
+  .obtn{
+    border:1.5px solid rgba(255,255,255,.55); border-radius:9px; width:58px; height:44px;
+    font-size:22px; letter-spacing:2px; display:flex; align-items:center; justify-content:center;
+    background:none; color:#fff; flex-shrink:0;
+  }
+  .hr{ height:1px; background:rgba(255,255,255,.2); margin:22px 0 20px; }
+  .balances{ display:flex; }
+  .bal{ flex:1; min-width:0; }
+  .bal .lbl{ font-size:19px; color:#c1d0dc; margin-bottom:8px; }
+  .bal .amt{ font-size:28px; font-weight:400; white-space:nowrap; }
+  .bal .amt .cur{ font-size:.58em; color:#c1d0dc; margin-left:5px; }
+
   .timabil{
     display:flex; align-items:center; justify-content:space-between;
-    padding:20px 22px; font-weight:700; flex-shrink:0;
-    border-bottom:1px solid var(--divider);
+    padding:20px 22px; font-weight:700; font-size:19px; flex-shrink:0;
+    border-bottom:1px solid var(--line);
   }
-  .timabil .right{ display:flex; align-items:center; gap:10px; color:var(--navy-text); }
-
-  /* ---- Search ---- */
+  .timabil .right{ display:flex; align-items:center; gap:10px; font-weight:400; }
   .search-wrap{ padding:22px 22px 6px; flex-shrink:0; }
   .search{
-    width:100%; border:1.5px solid #ccd3da; border-radius:6px;
-    padding:18px 20px; font-size:19px; color:var(--navy-text);
-    outline:none;
+    width:100%; border:1.5px solid #ccd3da; border-radius:5px;
+    padding:17px 20px; font-size:19px; color:var(--ink); outline:none; background:#fff;
   }
   .search::placeholder{ color:#9aa6b1; }
-
-  /* ---- Transactions ---- */
-  .tx-list{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 22px 40px; }
-  .tx{
-    display:flex; justify-content:space-between; align-items:flex-start;
-    padding:22px 0; border-bottom:1px solid var(--divider); gap:12px;
-  }
-  .tx .name{ font-size:21px; font-weight:700; color:var(--navy-text); }
+  .tx-list{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 22px calc(var(--safe-b) + 30px); }
+  .tx{ display:flex; justify-content:space-between; align-items:flex-start; padding:22px 0; border-bottom:1px solid var(--line); gap:12px; }
+  .tx .name{ font-size:20px; font-weight:700; }
   .tx .date{ font-size:18px; color:#33556f; margin-top:6px; }
   .tx .r{ text-align:right; white-space:nowrap; }
   .tx .val{ font-size:21px; font-weight:700; }
   .tx .val.pos{ color:var(--green); }
-  .tx .val.neg{ color:var(--navy-text); }
   .tx .sub{ font-size:18px; color:#33556f; margin-top:6px; }
+  .empty{ padding:40px 0; text-align:center; color:var(--muted); font-size:17px; }
 
-  /* ---- Secret editor ---- */
-  .overlay{
-    position:fixed; inset:0; background:rgba(0,0,0,.45);
-    display:none; align-items:flex-end; z-index:50;
+  /* ---------- Menu ---------- */
+  #menu{
+    position:fixed; inset:0; z-index:120; background:#fff;
+    display:flex; flex-direction:column;
+    transform:translateY(100%); transition:transform .3s cubic-bezier(.32,.72,0,1);
+    visibility:hidden;
   }
+  #menu.open{ transform:translateY(0); visibility:visible; }
+  .mgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:34px 8px; padding:34px 18px 40px; }
+  .mitem{ background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:14px; color:var(--ink); }
+  .mitem:active{ opacity:.5; }
+  .mitem .lb{ font-size:16px; text-align:center; }
+  .mgrid.grey{ background:#eef2f4; }
+  .menu-scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .logout{
+    margin:20px 18px calc(var(--safe-b) + 22px); background:var(--blue); color:#fff;
+    border:none; border-radius:5px; padding:20px; font-size:21px; width:calc(100% - 36px);
+  }
+  .logout:active{ background:#245f95; }
+
+
+  /* ---------- Millifærsla (form) ---------- */
+  .form{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 22px 30px; background:#fff; }
+  .fsect{ font-family:var(--serif); font-size:24px; font-weight:600; color:var(--ink); padding-bottom:10px; margin-top:10px; }
+  .fsect + .underline{ height:2px; background:var(--ink); margin-bottom:22px; }
+  .fgroup{ margin-bottom:20px; }
+  .fgroup > label{ display:block; font-size:16px; font-weight:600; color:#3d5f7d; margin-bottom:8px; }
+  .field{
+    width:100%; border:1.5px solid #ccd3da; border-radius:5px; padding:16px 18px;
+    font-size:20px; color:var(--ink); outline:none; background:#fff;
+  }
+  .field:focus{ border-color:var(--blue); }
+  .field::placeholder{ color:#9aa6b1; }
+  .field.bad{ border-color:#c62333; }
+  select.field{
+    -webkit-appearance:none; appearance:none; padding-right:46px;
+    background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2316395a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 18px center;
+  }
+  .acctnum{ display:flex; align-items:center; gap:8px; }
+  .acctnum .field{ text-align:center; padding:16px 6px; min-width:0; }
+  .acctnum .b1{ flex:2.2; } .acctnum .b2{ flex:1.4; } .acctnum .b3{ flex:3; }
+  .acctnum .dash{ color:#9aa6b1; font-size:20px; }
+  .amountwrap{ position:relative; }
+  .amountwrap .isk{ position:absolute; right:18px; top:50%; transform:translateY(-50%); font-size:17px; color:#7a8794; pointer-events:none; }
+  .amountwrap .field{ padding-right:56px; font-size:24px; font-weight:600; }
+  .err{ display:none; color:#c62333; font-size:14px; margin-top:7px; }
+  .err.show{ display:block; }
+  .bottombar{
+    flex-shrink:0; background:#fff; border-top:1px solid var(--line);
+    padding:14px 18px calc(var(--safe-b) + 14px);
+  }
+  .bigbtn{ width:100%; background:var(--blue); color:#fff; border:none; border-radius:5px; padding:18px; font-size:20px; }
+  .bigbtn:active{ background:#245f95; }
+  .bigbtn.pale{ background:#eef1f4; color:var(--ink); margin-top:10px; }
+
+  /* ---------- Kvittun ---------- */
+  .receipt{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:18px 22px 24px; background:#fff; text-align:center; }
+  .tick{
+    width:98px; height:98px; border-radius:50%; background:var(--green);
+    display:flex; align-items:center; justify-content:center; margin:10px auto 20px;
+    animation:pop .45s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .receipt h1{ font-family:var(--serif); font-size:34px; font-weight:600; color:var(--ink); }
+  .receipt .ramt{ font-size:33px; font-weight:600; color:var(--ink); margin-top:12px; }
+  .receipt .rsub{ font-size:17px; color:#3d5f7d; margin:8px 0 22px; }
+  .rlist{ text-align:left; border-top:1px solid var(--line); }
+  .rrow{ display:flex; justify-content:space-between; gap:16px; padding:16px 2px; border-bottom:1px solid var(--line); font-size:17px; }
+  .rrow .k{ color:#5b7a92; flex-shrink:0; }
+  .rrow .v{ color:var(--ink); font-weight:600; text-align:right; word-break:break-word; }
+
+  /* ---------- Vinnsla ---------- */
+  #processing{
+    position:fixed; inset:0; z-index:140; background:rgba(255,255,255,.97);
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  }
+  #processing.on{ display:flex; }
+  .spin{ width:54px; height:54px; border:4px solid #dbe3ea; border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  #processing .ptxt{ font-size:19px; color:var(--ink); }
+
+  /* ---------- Secret sheet ---------- */
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:150; display:none; align-items:flex-end; }
   .overlay.open{ display:flex; }
   .sheet{
-    background:#fff; width:100%; border-radius:20px 20px 0 0;
-    padding:24px 22px 34px; box-shadow:0 -8px 30px rgba(0,0,0,.2);
-    animation:up .22s ease; max-height:88vh; overflow-y:auto;
+    background:#fff; width:100%; border-radius:18px 18px 0 0; padding:0 18px calc(var(--safe-b) + 6px);
+    height:88vh; display:flex; flex-direction:column; overflow:hidden;
+    animation:up .26s cubic-bezier(.32,.72,0,1); box-shadow:0 -8px 30px rgba(0,0,0,.25);
   }
-  @keyframes up{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
-  .sheet h2{ font-size:22px; color:var(--navy-text); margin-bottom:4px; }
-  .sheet .hint{ font-size:14px; color:var(--muted); margin-bottom:20px; }
-  .field{ margin-bottom:18px; }
-  .field label{ display:block; font-size:15px; font-weight:700; color:var(--navy-text); margin-bottom:8px; }
-  .field input{
-    width:100%; border:1.5px solid #ccd3da; border-radius:8px;
-    padding:14px 16px; font-size:18px; color:var(--navy-text); outline:none;
-  }
-  .field input:focus{ border-color:var(--navy); }
-  .checkrow{ display:flex; align-items:center; gap:10px; margin-bottom:22px; font-size:15px; color:var(--navy-text); }
-  .checkrow input{ width:20px; height:20px; }
-  .divider-lbl{ font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:6px 0 14px; }
-  .addgrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .addgrid .full{ grid-column:1 / -1; }
-  .btn{
-    width:100%; border:none; border-radius:10px; padding:16px;
-    font-size:17px; font-weight:700; cursor:pointer; margin-top:6px;
-  }
-  .btn.primary{ background:var(--navy); color:#fff; }
-  .btn.ghost{ background:#eef1f4; color:var(--navy-text); margin-top:10px; }
+  @keyframes up{ from{ transform:translateY(100%);} to{ transform:translateY(0);} }
+  .grab{ width:40px; height:5px; border-radius:3px; background:#d3d9de; margin:0 auto 14px; }
+  .sheet-head{ flex-shrink:0; background:#fff; padding:12px 0 6px; }
+  .panes{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -18px; padding:0 18px; }
+  .sh-top{ display:flex; align-items:center; justify-content:space-between; }
+  .xbtn{ background:#eef1f4; border:none; border-radius:50%; width:34px; height:34px; font-size:17px; color:#5b6b78; }
+  .tabs{ display:flex; gap:5px; background:#eef1f4; border-radius:12px; padding:4px; margin:14px 0 6px; }
+  .tabs .tb{ flex:1; border:none; background:none; padding:12px 4px; border-radius:9px; font-size:15px; font-weight:600; color:#5b6b78; }
+  .tabs .tb.on{ background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.14); }
+  .pane{ display:none; padding-top:12px; }
+  .pane.on{ display:block; }
+  .sheet-foot{ flex-shrink:0; background:#fff; border-top:1px solid var(--line); padding:12px 0 6px; }
+  .sheet-foot .btn{ margin-top:0; }
+  .note{ font-size:13px; color:var(--muted); margin-top:7px; line-height:1.45; }
+
+  .arow{ border:1px solid var(--line); border-radius:12px; margin-bottom:10px; overflow:hidden; background:#fff; }
+  .arow .sum{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:15px 14px; background:#fafbfc; border:none; text-align:left; }
+  .arow .sum .nm{ display:block; font-size:16px; font-weight:700; color:var(--ink); }
+  .arow .sum .bl{ display:block; font-size:14px; color:#5b7a92; margin-top:3px; }
+  .arow .sum .chev{ flex-shrink:0; transition:transform .2s; }
+  .arow.open .sum{ background:#eef4f9; }
+  .arow.open .chev{ transform:rotate(180deg); }
+  .arow .body{ display:none; padding:14px; border-top:1px solid var(--line); }
+  .arow.open .body{ display:block; }
+  .quick{ display:flex; gap:6px; margin:-4px 0 16px; }
+  .quick button{ flex:1; border:1px solid #d2d8de; background:#fff; border-radius:9px;
+    padding:11px 2px; font-size:14px; font-weight:600; color:var(--blue); }
+  .quick button:active{ background:#eaf2f9; }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
+  .chip{ border:1px solid #d2d8de; background:#fff; border-radius:20px; padding:8px 14px; font-size:13px; color:#5b6b78; }
+  .chip:active{ background:#eef1f4; }
+  .txrow{ display:flex; align-items:center; gap:10px; padding:12px 2px; border-bottom:1px solid var(--line); }
+  .txrow .tl{ flex:1; min-width:0; }
+  .txrow .tl b{ display:block; font-size:15px; color:var(--ink); font-weight:600; }
+  .txrow .tl small{ font-size:13px; color:var(--muted); }
+  .txrow .tv{ font-size:15px; font-weight:700; white-space:nowrap; }
+  .txrow .tv.pos{ color:var(--green); }
+  .txrow .x{ background:none; border:none; color:#c62333; font-size:19px; padding:4px 6px; flex-shrink:0; }
   .btn.small{ padding:12px; font-size:15px; }
+  .sheet h2{ font-size:22px; font-weight:700; color:var(--ink); }
+  .sheet .hint{ font-size:14px; color:var(--muted); margin:4px 0 18px; }
+  .slabel{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin:22px 0 10px; }
+  .frow{ margin-bottom:12px; }
+  .frow label{ display:block; font-size:13px; font-weight:600; color:#5b6b78; margin-bottom:6px; }
+  .inp{
+    width:100%; border:1.5px solid #d2d8de; border-radius:9px; padding:13px 14px;
+    font-size:17px; color:var(--ink); outline:none; background:#fff;
+  }
+  .inp:focus{ border-color:var(--blue); }
+  .accbox{ border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; background:#fafbfc; }
+  .accbox .hd{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; }
+  .accbox .hd .t{ font-size:15px; font-weight:700; color:var(--ink); }
+  .kill{ background:#fdeaec; color:#c62333; border:none; border-radius:8px; padding:7px 11px; font-size:13px; font-weight:600; }
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .three{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .chk{ display:flex; align-items:center; gap:10px; font-size:15px; color:var(--ink); margin:14px 0 4px; }
+  .chk input{ width:20px; height:20px; accent-color:var(--blue); }
+  .btn{ width:100%; border:none; border-radius:11px; padding:16px; font-size:17px; font-weight:600; margin-top:10px; }
+  .btn.primary{ background:var(--navy); color:#fff; }
+  .btn.blue{ background:var(--blue); color:#fff; }
+  .btn.ghost{ background:#eef1f4; color:var(--ink); }
+  .btn.danger{ background:#fdeaec; color:#c62333; }
+  .btn:active{ opacity:.8; }
+  .segrow{ display:flex; gap:8px; }
+  .seg{ flex:1; border:1.5px solid #d2d8de; background:#fff; border-radius:9px; padding:11px; font-size:14px; color:#5b6b78; }
+  .seg.on{ border-color:var(--blue); background:#eaf2f9; color:var(--blue); font-weight:600; }
+
+  .toast{
+    position:fixed; left:50%; bottom:calc(var(--safe-b) + 90px); transform:translateX(-50%) translateY(20px);
+    background:rgba(20,32,44,.94); color:#fff; padding:12px 20px; border-radius:24px; font-size:15px;
+    opacity:0; transition:.25s; z-index:300; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .a2hs{
+    position:fixed; left:12px; right:12px; bottom:calc(var(--safe-b) + 12px); z-index:190;
+    background:rgba(28,44,60,.96); color:#fff; border-radius:14px; padding:14px 16px;
+    font-size:14px; line-height:1.45; display:none; align-items:center; gap:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.3);
+  }
+  .a2hs.show{ display:flex; }
+  .a2hs button{ background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:8px; padding:8px 12px; font-size:13px; flex-shrink:0; }
 </style>
 </head>
 <body>
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="topbar">
-      <button class="icon-btn">&#8592;</button>
-      <div class="title">Bankareikningar</div>
-      <button class="icon-btn">&#9776;</button>
+<!-- ============ SPLASH ============ -->
+<div id="splash">
+  <svg class="logo big" viewBox="0 0 240 232" aria-hidden="true">
+    <path fill="#e8112d" fill-rule="evenodd" d="
+      M0 232L96 26C100 10 106 0 120 0L214 0L240 232ZM146 0C143 90 139 160 128 196C125 206 120 212 116 216C112 220 116 226 122 222C132 214 140 200 146 180C156 145 160 70 162 0Z"/>
+  </svg>
+</div>
+
+<div id="app">
+
+  <!-- ============ HOME ============ -->
+  <section class="screen" id="s-home">
+    <div class="hdr">
+      <div class="hdr-row">
+        <svg class="logo lg-trigger" viewBox="0 0 240 232"><path fill="#e8112d" fill-rule="evenodd" d="M0 232L96 26C100 10 106 0 120 0L214 0L240 232ZM146 0C143 90 139 160 128 196C125 206 120 212 116 216C112 220 116 226 122 222C132 214 140 200 146 180C156 145 160 70 162 0Z"/></svg>
+        <div style="display:flex;align-items:center">
+          <button class="iconbtn" aria-label="Notandi">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><circle cx="12" cy="12" r="10.2"/><circle cx="12" cy="9.6" r="3.3"/><path d="M5.8 19.4c1.1-3 3.5-4.6 6.2-4.6s5.1 1.6 6.2 4.6"/></svg>
+          </button>
+          <button class="iconbtn menu-open" aria-label="Valmynd">
+            <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="acct-row">
-      <div>
-        <div class="acct-name serif" id="acctName">Garðar sparibanki</div>
-        <div class="acct-num" id="acctNum">0123-15-148641</div>
-      </div>
-      <button class="dots" id="dotsBtn">&#8943;</button>
+    <div class="summary">
+      <h1>Samantekt</h1>
+      <div class="rule"></div>
+      <div class="sumrow"><span class="k">Veltureikningar</span><span class="v"><span id="sumVelta">0</span> ISK</span></div>
+      <div class="sumrow"><span class="k">Sparireikningar</span><span class="v"><span id="sumSpari">0</span> ISK</span></div>
+      <div class="sumrow sub"><span class="k">Til ráðstöfunar</span><span class="v"><span id="sumRad">0</span> ISK</span></div>
     </div>
 
-    <div class="hr"></div>
-
-    <div class="balances">
-      <div class="bal">
-        <div class="lbl">Staða</div>
-        <div class="amt"><span id="balText">58.240.750</span><span class="cur">ISK</span></div>
+    <div class="greyfill">
+      <div class="card" data-go="accounts">
+        <span class="ci"><svg width="46" height="34" viewBox="0 0 46 34" fill="none" stroke="#16395a" stroke-width="1.5"><rect x="1" y="4" width="36" height="26" rx="3"/><rect x="9" y="1" width="36" height="26" rx="3" fill="#fff"/><path d="M13 8h10M13 13h16M13 18h7"/></svg></span>
+        <span><span class="ct">Kort</span><span class="cs" style="display:block">Finnum rétta kortið fyrir þig</span></span>
       </div>
-      <div class="bal">
-        <div class="lbl">Ráðstöfun</div>
-        <div class="amt"><span id="availText">58.240.750</span><span class="cur">ISK</span></div>
+      <div class="card" data-go="accounts">
+        <span class="ci"><svg width="44" height="42" viewBox="0 0 44 44" fill="none" stroke="#16395a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 41C20 28 23 16 34 5"/><path d="M34 5c-11 1-17 8-16 18 11-1 17-8 16-18z"/><path d="M20 25C14 20 6 22 3 31c9 3 16 1 17-6z"/></svg></span>
+        <span><span class="ct">Lífeyrissparnaður</span><span class="cs" style="display:block">Byggjum upp framtíðina þína</span></span>
+      </div>
+    </div>
+
+    <button class="fab" id="fabBtn">Millifæra<span class="bar"></span><span class="dots">&#8943;</span></button>
+  </section>
+
+  <!-- ============ ACCOUNTS ============ -->
+  <section class="screen" id="s-accounts">
+    <div class="hdr">
+      <div class="hdr-row rel">
+        <svg class="logo lg-trigger" viewBox="0 0 240 232"><path fill="#e8112d" fill-rule="evenodd" d="M0 232L96 26C100 10 106 0 120 0L214 0L240 232ZM146 0C143 90 139 160 128 196C125 206 120 212 116 216C112 220 116 226 122 222C132 214 140 200 146 180C156 145 160 70 162 0Z"/></svg>
+        <div class="hdr-mid">Bankareikningar</div>
+        <button class="iconbtn menu-open" aria-label="Valmynd">
+          <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="userrow">
+      <span class="u" id="userName">Garðar Freyr Valdimarsson</span>
+      <span class="a">Aðgerðir <span class="dots">&#8943;</span></span>
+    </div>
+
+    <div class="scroll" id="acctScroll"></div>
+
+    <div class="tabbar">
+      <button class="tab on">
+        <svg width="30" height="26" viewBox="0 0 30 26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 9L15 2l13 7"/><path d="M5 9v11M11 9v11M19 9v11M25 9v11M2 23h26"/></svg>
+        <span class="lb">Landsbankinn</span>
+      </button>
+      <div class="plus">+</div>
+      <button class="tab">
+        <svg width="30" height="26" viewBox="0 0 30 26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 9L15 2l13 7"/><path d="M5 9v11M11 9v11M19 9v11M25 9v11M2 23h26"/></svg>
+        <span class="lb">Aðrir bankar</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ DETAIL ============ -->
+  <section class="screen" id="s-detail">
+    <div class="hdr">
+      <div class="hdr-row rel">
+        <button class="iconbtn nav-back" id="backBtn" aria-label="Til baka">
+          <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 12l10 9M2 12h26"/></svg>
+        </button>
+        <div class="hdr-mid">Bankareikningar</div>
+        <button class="iconbtn menu-open" aria-label="Valmynd">
+          <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="dtl-head">
+      <div class="acct-row">
+        <div>
+          <div class="acct-name" id="dName">Garðar sparibanki</div>
+          <div class="acct-num" id="dNum">0123-15-148641</div>
+        </div>
+        <button class="obtn" id="dDots">&#8943;</button>
+      </div>
+      <div class="hr"></div>
+      <div class="balances">
+        <div class="bal"><div class="lbl">Staða</div><div class="amt"><span id="dBal">0</span><span class="cur">ISK</span></div></div>
+        <div class="bal"><div class="lbl">Ráðstöfun</div><div class="amt"><span id="dAvail">0</span><span class="cur">ISK</span></div></div>
+      </div>
+    </div>
+
+    <div class="timabil"><span>Tímabil</span><span class="right">1 ár <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16395a" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 2v5M16 2v5M3 10h18"/></svg></span></div>
+
+    <div class="search-wrap"><input class="search" id="search" placeholder="Leita að færslu"></div>
+    <div class="tx-list" id="txList"></div>
+  </section>
+
+  <!-- ============ MILLIFÆRA ============ -->
+  <section class="screen" id="s-transfer">
+    <div class="hdr">
+      <div class="hdr-row rel">
+        <button class="iconbtn nav-back" aria-label="Til baka">
+          <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 12l10 9M2 12h26"/></svg>
+        </button>
+        <div class="hdr-mid">Millifæra</div>
+        <button class="iconbtn menu-open" aria-label="Valmynd">
+          <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="form">
+      <div class="fsect">Af reikningi</div><div class="underline"></div>
+      <div class="fgroup">
+        <select class="field" id="frAcct"></select>
+      </div>
+
+      <div class="fsect">Móttakandi</div><div class="underline"></div>
+
+      <div class="fgroup">
+        <label for="toKt">Kennitala</label>
+        <input class="field" id="toKt" type="text" inputmode="numeric" placeholder="000000-0000" maxlength="11">
+        <div class="err" id="errKt">Sláðu inn 10 stafa kennitölu</div>
+      </div>
+
+      <div class="fgroup">
+        <label for="toName">Nafn móttakanda</label>
+        <input class="field" id="toName" type="text" placeholder="Nafn">
+      </div>
+
+      <div class="fgroup">
+        <label>Reikningsnúmer</label>
+        <div class="acctnum">
+          <input class="field b1" id="toB1" type="text" inputmode="numeric" placeholder="0000" maxlength="4">
+          <span class="dash">-</span>
+          <input class="field b2" id="toB2" type="text" inputmode="numeric" placeholder="00" maxlength="2">
+          <span class="dash">-</span>
+          <input class="field b3" id="toB3" type="text" inputmode="numeric" placeholder="000000" maxlength="6">
+        </div>
+        <div class="err" id="errAcct">Sláðu inn fullt reikningsnúmer</div>
+      </div>
+
+      <div class="fsect">Upphæð</div><div class="underline"></div>
+
+      <div class="fgroup">
+        <div class="amountwrap">
+          <input class="field" id="trAmt" type="text" inputmode="numeric" placeholder="0">
+          <span class="isk">ISK</span>
+        </div>
+        <div class="err" id="errAmt">Sláðu inn upphæð</div>
+      </div>
+
+      <div class="fgroup">
+        <label for="trNote">Skýring</label>
+        <input class="field" id="trNote" type="text" placeholder="Millifært" maxlength="24">
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <button class="bigbtn" id="doTransfer">Millifæra</button>
+    </div>
+  </section>
+
+  <!-- ============ KVITTUN ============ -->
+  <section class="screen" id="s-receipt">
+    <div class="hdr">
+      <div class="hdr-row rel">
+        <div class="spacer"></div>
+        <div class="hdr-mid">Kvittun</div>
+        <button class="iconbtn menu-open" aria-label="Valmynd">
+          <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="receipt">
+      <div class="tick">
+        <svg width="52" height="40" viewBox="0 0 52 40" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21l14 14L48 5"/></svg>
+      </div>
+      <h1>Greitt</h1>
+      <div class="ramt" id="rcAmt">0 ISK</div>
+      <div class="rsub" id="rcSub">Millifærsla tókst</div>
+
+      <div class="rlist">
+        <div class="rrow"><span class="k">Móttakandi</span><span class="v" id="rcName">-</span></div>
+        <div class="rrow"><span class="k">Kennitala</span><span class="v" id="rcKt">-</span></div>
+        <div class="rrow"><span class="k">Reikningur</span><span class="v" id="rcAcct">-</span></div>
+        <div class="rrow"><span class="k">Af reikningi</span><span class="v" id="rcFrom">-</span></div>
+        <div class="rrow"><span class="k">Skýring</span><span class="v" id="rcNote">-</span></div>
+        <div class="rrow"><span class="k">Dagsetning</span><span class="v" id="rcDate">-</span></div>
+        <div class="rrow"><span class="k">Tilvísun</span><span class="v" id="rcRef">-</span></div>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <button class="bigbtn" id="rcDone">Loka</button>
+      <button class="bigbtn pale" id="rcAgain">Millifæra aftur</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ MENU ============ -->
+<div id="menu">
+  <div class="hdr">
+    <div class="hdr-row">
+      <svg class="logo lg-trigger" viewBox="0 0 240 232"><path fill="#e8112d" fill-rule="evenodd" d="M0 232L96 26C100 10 106 0 120 0L214 0L240 232ZM146 0C143 90 139 160 128 196C125 206 120 212 116 216C112 220 116 226 122 222C132 214 140 200 146 180C156 145 160 70 162 0Z"/></svg>
+      <div style="display:flex;align-items:center">
+        <button class="iconbtn"><svg width="30" height="28" viewBox="0 0 30 28" fill="none" stroke="#fff" stroke-width="1.6"><path d="M15 2C7.8 2 2 6.8 2 12.8c0 3.5 2 6.6 5.1 8.6L6 27l6.2-3.6c.9.2 1.8.2 2.8.2 7.2 0 13-4.8 13-10.8S22.2 2 15 2z"/></svg></button>
+        <button class="iconbtn"><svg width="30" height="26" viewBox="0 0 30 26" fill="none" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"><path d="M2 15L6 3h18l4 12v8H2v-8z"/><path d="M2 15h7l1.5 3h9L21 15h7"/></svg></button>
+        <button class="iconbtn"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><circle cx="12" cy="12" r="10.2"/><circle cx="12" cy="9.6" r="3.3"/><path d="M5.8 19.4c1.1-3 3.5-4.6 6.2-4.6s5.1 1.6 6.2 4.6"/></svg></button>
+        <button class="iconbtn" id="menuClose"><svg width="28" height="28" viewBox="0 0 28 28" stroke="#fff" stroke-width="2.1" stroke-linecap="round"><path d="M4 4l20 20M24 4L4 24"/></svg></button>
       </div>
     </div>
   </div>
 
-  <!-- TÍMABIL -->
-  <div class="timabil">
-    <span>Tímabil</span>
-    <span class="right">1 ár &#128197;</span>
+  <div class="menu-scroll">
+    <div class="mgrid">
+      <button class="mitem" data-go="accounts">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6" stroke-linejoin="round"><rect x="2" y="6" width="48" height="34" rx="4"/><path d="M2 14h34a4 4 0 014 4v10a4 4 0 01-4 4H2"/><circle cx="33" cy="23" r="2.4" fill="#16395a" stroke="none"/></svg>
+        <span class="lb">Bankareikningar</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6"><rect x="2" y="8" width="48" height="30" rx="4"/><rect x="9" y="15" width="11" height="8" rx="1.6"/><path d="M28 28h16M9 28h13"/></svg>
+        <span class="lb">Kort</span>
+      </button>
+      <button class="mitem" data-go="transfer">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4L5 22"/><path d="M5 8v14h14"/><path d="M29 40l18-18"/><path d="M47 36V22H33"/></svg>
+        <span class="lb">Millifærslur</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6" stroke-linecap="round"><rect x="2" y="6" width="48" height="32" rx="4"/><path d="M11 17l3.4 3.4L21 14M27 19h14M11 29h10M27 29h14"/></svg>
+        <span class="lb">Ógreiddir reikn.</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6" stroke-linejoin="round"><path d="M2 12a4 4 0 014-4h13l5 6h22a4 4 0 014 4v18a4 4 0 01-4 4H6a4 4 0 01-4-4V12z"/><path d="M15 32v-7M24 32V19M33 32v-10"/></svg>
+        <span class="lb">Lán</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2h20l10 10v30H12z"/><path d="M32 2v10h10"/><path d="M18 22h18M18 30h12"/></svg>
+        <span class="lb">Skjöl</span>
+      </button>
+    </div>
+
+    <div class="mgrid grey">
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v34h44"/><path d="M10 30l10-12 8 6 12-16"/></svg>
+        <span class="lb">Verðbréf</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><text x="2" y="19" font-size="19" fill="#16395a" stroke="none" font-family="Georgia,serif">€</text><text x="36" y="41" font-size="19" fill="#16395a" stroke="none" font-family="Georgia,serif">$</text><path d="M20 13c6-4 13-3 17 2"/><path d="M37 8v7h-7"/><path d="M32 31c-6 4-13 3-17-2"/><path d="M15 36v-7h7"/></svg>
+        <span class="lb">Gjaldmiðlar</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6" stroke-linejoin="round"><path d="M30 12c7 0 13 5 13 11 0 4-2 7-6 9v6h-6v-4h-8v4h-6v-6c-3-2-5-6-5-9 0-2 .4-4 1.3-5.6"/><path d="M9 20c-3 0-4-2-4-4"/><circle cx="34" cy="22" r="1.6" fill="#16395a" stroke="none"/><path d="M20 12a6 6 0 016-6"/></svg>
+        <span class="lb">Spara</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M24 42C24 28 27 15 39 3"/><path d="M39 3c-12 1-19 9-18 20 12-1 19-9 18-20z"/><path d="M24 26C17 20 8 22 5 32c10 3 18 1 19-6z"/></svg>
+        <span class="lb">Lífeyrir</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.7" stroke-linejoin="round"><path d="M26 3l6.6 13.6L47 18.6 36.6 29.2 39.2 44 26 37.2 12.8 44l2.6-14.8L5 18.6l14.4-2z"/></svg>
+        <span class="lb">Vild</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.7" stroke-linecap="round"><path d="M4 26C4 14 13 6 26 6s22 8 22 20c-3-3-6-3-8 0-2-3-6-3-8 0-2-3-6-3-8 0-2-3-6-3-8 0-2-3-5-3-8 0z"/><path d="M26 26v12a4 4 0 008 0"/></svg>
+        <span class="lb">Tryggingar</span>
+      </button>
+      <button class="mitem">
+        <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.7"><path d="M26 4c-7.2 0-13 5.6-13 12.6C13 26 26 40 26 40s13-14 13-23.4C39 9.6 33.2 4 26 4z"/><circle cx="26" cy="16.6" r="4.6"/></svg>
+        <span class="lb">Afgreiðslust.</span>
+      </button>
+    </div>
+
+    <button class="logout" id="menuClose2">Útskrá</button>
   </div>
+</div>
 
-  <!-- SEARCH -->
-  <div class="search-wrap">
-    <input class="search" id="search" placeholder="Leita að færslu">
-  </div>
-
-  <!-- TRANSACTIONS -->
-  <div class="tx-list" id="txList"></div>
-
-  <!-- SECRET EDITOR -->
-  <div class="overlay" id="overlay">
-    <div class="sheet">
-      <h2>Stillingar</h2>
-      <div class="hint">Falið — breyttu tölunum hér.</div>
-
-      <div class="field">
-        <label>Staða (ISK)</label>
-        <input type="text" inputmode="numeric" id="editBal" placeholder="58240750">
+<!-- ============ SECRET SHEET ============ -->
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet">
+    <div class="sheet-head">
+      <div class="grab"></div>
+      <div class="sh-top">
+        <h2>Stillingar</h2>
+        <button class="xbtn" id="closeSheet" aria-label="Loka">&#10005;</button>
       </div>
-
-      <div class="field">
-        <label>Ráðstöfun (ISK)</label>
-        <input type="text" inputmode="numeric" id="editAvail" placeholder="58240750">
+      <div class="tabs">
+        <button class="tb on" data-pane="p-accounts">Reikningar</button>
+        <button class="tb" data-pane="p-names">Nöfn</button>
+        <button class="tb" data-pane="p-tx">Færslur</button>
       </div>
+    </div>
 
-      <div class="checkrow">
-        <input type="checkbox" id="syncAvail" checked>
-        <label for="syncAvail" style="margin:0;font-weight:400;">Láta Ráðstöfun fylgja Stöðu</label>
+    <div class="panes">
+
+    <!-- Reikningar -->
+    <div class="pane on" id="p-accounts">
+      <div id="acctEditors"></div>
+      <button class="btn ghost" id="addAcct">+ Nýr reikningur</button>
+    </div>
+
+    <!-- Nöfn -->
+    <div class="pane" id="p-names">
+      <div class="frow">
+        <label>Nafn notanda</label>
+        <input class="inp" id="setUser" type="text" placeholder="Nafn og eftirnafn">
+        <div class="note">Skiptu um nafn hér og það breytist alls staðar — í færslunum, á reikningunum og efst á reikningalistanum.</div>
       </div>
-
-      <div class="field">
-        <label>Nafn reiknings</label>
-        <input type="text" id="editName" placeholder="Garðar sparibanki">
+      <div class="frow">
+        <label>Til ráðstöfunar (ISK)</label>
+        <input class="inp money" id="setRad" type="text" inputmode="numeric">
       </div>
-
-      <div class="divider-lbl">Bæta við færslu</div>
-      <div class="addgrid">
-        <input class="search full" style="padding:12px 14px;font-size:16px" type="text" id="txName" placeholder="Nafn">
-        <input class="search" style="padding:12px 14px;font-size:16px" type="text" id="txDate" placeholder="dd.mm.áááá">
-        <input class="search" style="padding:12px 14px;font-size:16px" type="text" inputmode="numeric" id="txAmt" placeholder="50000 eða -2000">
+      <div class="chk">
+        <input type="checkbox" id="syncAvail">
+        <label for="syncAvail" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Ráðstöfun fylgir stöðunni</label>
       </div>
-      <button class="btn ghost small" id="addTx">+ Bæta við færslu</button>
+      <div class="chk">
+        <input type="checkbox" id="deductChk">
+        <label for="deductChk" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Draga millifærslur af stöðunni</label>
+      </div>
+      <button class="btn danger" id="resetBtn">Endurstilla allt</button>
+    </div>
 
-      <button class="btn primary" id="saveBtn">Vista</button>
-      <button class="btn ghost" id="closeBtn">Loka</button>
+    <!-- Færslur -->
+    <div class="pane" id="p-tx">
+      <div class="frow">
+        <label>Reikningur</label>
+        <select class="inp" id="txAcct"></select>
+      </div>
+      <div id="txEditor"></div>
+      <div class="slabel">Bæta við færslu</div>
+      <div class="frow"><input class="inp" id="txName" type="text" placeholder="Nafn"></div>
+      <div class="chips">
+        <button class="chip" id="chipMe">Nafn notanda</button>
+        <button class="chip" data-chip="Launagreiðsla">Launagreiðsla</button>
+        <button class="chip" data-chip="Millifært">Millifært</button>
+      </div>
+      <div class="two">
+        <div class="frow"><input class="inp" id="txDate" type="text" placeholder="dd.mm.áááá"></div>
+        <div class="frow"><input class="inp money" id="txAmt" type="text" inputmode="numeric" placeholder="50000 eða -2000"></div>
+      </div>
+      <button class="btn ghost" id="addTx">+ Bæta við færslu</button>
+    </div>
+
+    </div>
+
+    <div class="sheet-foot">
+      <button class="btn primary" id="doneSheet">Loka</button>
     </div>
   </div>
+</div>
+
+<div id="processing"><div class="spin"></div><div class="ptxt">Millifæri…</div></div>
+
+<div class="toast" id="toast"></div>
+
+<div class="a2hs" id="a2hs">
+  <span>Ýttu á <b>Deila</b> og svo <b>„Bæta við á heimaskjá“</b> — þá opnast þetta eins og alvöru app.</span>
+  <button id="a2hsClose">Í lagi</button>
+</div>
 
 <script>
-  // ---- state ----
-  let balance = 58240750;
-  let available = 58240750;
-  let acctName = "Garðar sparibanki";
+(function(){
+  "use strict";
 
-  let txs = [
-    { name:"Garðar Freyr Valdimarsso",  date:"24.08.2026", amt:50000 },
-    { name:"Garðar Freyr Valdimarsso",  date:"23.08.2026", amt:50000 },
-    { name:"Garðar Freyr Valdimarsson", date:"20.08.2026", amt:-2000 },
-    { name:"Garðar Freyr Valdimarsson", date:"18.08.2026", amt:-10000 },
-    { name:"Kort - Hlöllabátar",        date:"17.08.2026", amt:-2890 },
-    { name:"Launagreiðsla",             date:"15.08.2026", amt:420000 },
-    { name:"Netflix",                   date:"14.08.2026", amt:-2490 },
-    { name:"Garðar Freyr Valdimarsson", date:"12.08.2026", amt:-25000 },
-    { name:"Kort - Bónus",              date:"11.08.2026", amt:-8740 },
-    { name:"Millifærsla",               date:"09.08.2026", amt:150000 },
-    { name:"Kort - Costco",             date:"06.08.2026", amt:-19350 },
-    { name:"Spotify",                   date:"04.08.2026", amt:-1490 },
-    { name:"Garðar Freyr Valdimarsson", date:"01.08.2026", amt:-40000 },
-    { name:"Launagreiðsla",             date:"15.07.2026", amt:420000 },
-    { name:"Kort - N1",                 date:"12.07.2026", amt:-9200 },
-  ];
+  var KEY = "lb_state_v3";
 
-  // ---- helpers ----
+  function defaults(){
+    return {
+      user: "Garðar Freyr Valdimarsson",
+      radstofun: 59302,
+      syncAvail: true,
+      deduct: true,
+      accounts: [
+        { id:"a1", name:"Náman yngri", num:"0130-26-020136", kind:"velta", bal:6314, avail:6314, txs:[
+          { name:"Kort - Hlöllabátar", date:"28.08.2026", amt:-2890 },
+          { self:true, date:"24.08.2026", amt:10000 },
+          { name:"Kort - Bónus", date:"21.08.2026", amt:-8740 },
+          { name:"Vasapeningar", date:"15.08.2026", amt:20000 }
+        ]},
+        { id:"a2", name:"Garðar sparibanki", num:"0123-15-148641", kind:"spari", bal:1067040, avail:1067040, txs:[
+          { self:true, date:"30.08.2026", amt:-5000 },
+          { self:true, date:"24.08.2026", amt:50000 },
+          { self:true, date:"23.08.2026", amt:50000 },
+          { self:true, date:"20.08.2026", amt:-2000 },
+          { self:true, date:"18.08.2026", amt:-10000 },
+          { name:"Launagreiðsla", date:"15.08.2026", amt:420000 },
+          { self:true, date:"12.08.2026", amt:-25000 },
+          { name:"Millifærsla", date:"09.08.2026", amt:150000 },
+          { self:true, date:"01.08.2026", amt:-40000 },
+          { name:"Launagreiðsla", date:"15.07.2026", amt:420000 }
+        ]},
+        { id:"a3", name:"Framtíðargrunnur, verðtryggður", num:"0123-18-032869", kind:"spari", bal:645512, avail:645512, txs:[
+          { name:"Vextir", date:"01.08.2026", amt:4312 },
+          { self:true, date:"15.07.2026", amt:100000 },
+          { name:"Vextir", date:"01.07.2026", amt:4108 }
+        ]},
+        { id:"a4", name:"Framtíðargrunnur, verðtryggður", num:"0130-18-751474", kind:"spari", bal:258716, avail:258716, txs:[
+          { name:"Vextir", date:"01.08.2026", amt:1730 },
+          { self:true, date:"20.07.2026", amt:50000 }
+        ]}
+      ]
+    };
+  }
+
+  var S = load();
+  var currentId = "a2";
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(!raw) return defaults();
+      var o = JSON.parse(raw);
+      if(!o || !Array.isArray(o.accounts) || !o.accounts.length) return defaults();
+      o.accounts.forEach(function(a){
+        (a.txs || []).forEach(function(t){
+          if(!t.self && t.name && o.user &&
+             (t.name === o.user || (o.user.indexOf(t.name) === 0 && t.name.length > 10))) t.self = true;
+        });
+      });
+      return o;
+    }catch(e){ return defaults(); }
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+  }
+
+  // ---------- helpers ----------
+  function $(id){ return document.getElementById(id); }
   function fmt(n){
-    const neg = n < 0;
-    const s = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    n = Math.round(Number(n) || 0);
+    var neg = n < 0;
+    var s = Math.abs(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     return (neg ? "-" : "") + s;
   }
-  function render(){
-    document.getElementById("balText").textContent = fmt(balance);
-    document.getElementById("availText").textContent = fmt(available);
-    document.getElementById("acctName").textContent = acctName;
-    renderTx();
-  }
-  function renderTx(){
-    const q = document.getElementById("search").value.trim().toLowerCase();
-    const list = document.getElementById("txList");
-    list.innerHTML = "";
-    txs.filter(t => t.name.toLowerCase().includes(q) || t.date.includes(q))
-      .forEach(t => {
-        const pos = t.amt >= 0;
-        const div = document.createElement("div");
-        div.className = "tx";
-        div.innerHTML =
-          '<div><div class="name">'+t.name+'</div><div class="date">'+t.date+'</div></div>'+
-          '<div class="r"><div class="val '+(pos?"pos":"neg")+'">'+fmt(t.amt)+' ISK</div>'+
-          '<div class="sub">Millifært</div></div>';
-        list.appendChild(div);
-      });
-  }
-  function parseNum(v){
-    const n = parseInt((v||"").toString().replace(/[^\d-]/g,""),10);
+  function num(v){
+    var n = parseInt(String(v == null ? "" : v).replace(/[^\d-]/g, ""), 10);
     return isNaN(n) ? 0 : n;
   }
+  function acct(id){
+    for(var i=0;i<S.accounts.length;i++){ if(S.accounts[i].id === id) return S.accounts[i]; }
+    return S.accounts[0];
+  }
+  function esc(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function txLabel(t){ return t.self ? S.user : (t.name || ""); }
 
-  // ---- secret editor ----
-  const overlay = document.getElementById("overlay");
-  document.getElementById("dotsBtn").addEventListener("click", () => {
-    document.getElementById("editBal").value = balance;
-    document.getElementById("editAvail").value = available;
-    document.getElementById("editName").value = acctName;
-    overlay.classList.add("open");
-  });
-  document.getElementById("closeBtn").addEventListener("click", () => overlay.classList.remove("open"));
-  overlay.addEventListener("click", e => { if(e.target === overlay) overlay.classList.remove("open"); });
-
-  document.getElementById("saveBtn").addEventListener("click", () => {
-    balance = parseNum(document.getElementById("editBal").value);
-    if (document.getElementById("syncAvail").checked){
-      available = balance;
-    } else {
-      available = parseNum(document.getElementById("editAvail").value);
+  // renaming the user rewrites the name wherever it shows up
+  function renameEverywhere(newName){
+    newName = (newName || "").trim();
+    var oldName = S.user;
+    if(!newName || newName === oldName) return;
+    var oldFirst = oldName.split(/\s+/)[0], newFirst = newName.split(/\s+/)[0];
+    function swap(str){
+      if(!str) return str;
+      var out = str.split(oldName).join(newName);
+      if(oldFirst && oldFirst.length > 2) out = out.split(oldFirst).join(newFirst);
+      return out;
     }
-    const nm = document.getElementById("editName").value.trim();
-    if (nm) acctName = nm;
+    S.accounts.forEach(function(a){
+      a.name = swap(a.name);
+      (a.txs || []).forEach(function(t){ if(!t.self) t.name = swap(t.name); });
+    });
+    S.user = newName;
+  }
+
+  var toastT;
+  function toast(msg){
+    var t = $("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastT);
+    toastT = setTimeout(function(){ t.classList.remove("show"); }, 1600);
+  }
+
+  // ---------- navigation ----------
+  var stack = ["home"];
+  function screenEl(name){ return $("s-" + name); }
+  function show(name, opts){
+    opts = opts || {};
+    var from = stack[stack.length - 1];
+    if(name === from){ render(); return; }
+    var fromEl = screenEl(from), toEl = screenEl(name);
+    if(opts.back){
+      stack.pop();
+      toEl.classList.remove("behind"); toEl.classList.add("active");
+      fromEl.classList.remove("active");
+    }else{
+      stack.push(name);
+      fromEl.classList.remove("active"); fromEl.classList.add("behind");
+      toEl.classList.add("active");
+    }
     render();
-    overlay.classList.remove("open");
-  });
+  }
+  function goHome(){
+    stack.forEach(function(n){ screenEl(n).classList.remove("active","behind"); });
+    stack = ["home"];
+    screenEl("home").classList.add("active");
+    render();
+  }
 
-  document.getElementById("addTx").addEventListener("click", () => {
-    const name = document.getElementById("txName").value.trim() || "Millifært";
-    const date = document.getElementById("txDate").value.trim() || "";
-    const amt  = parseNum(document.getElementById("txAmt").value);
-    txs.unshift({ name, date, amt });
-    document.getElementById("txName").value = "";
-    document.getElementById("txDate").value = "";
-    document.getElementById("txAmt").value = "";
+  // ---------- rendering ----------
+  function render(){
+    var un = $("userName");
+    un.textContent = S.user;
+    un.style.fontSize = "19px";
+    for(var fs = 19; fs > 13 && un.scrollWidth > un.clientWidth + 1; fs--){
+      un.style.fontSize = fs + "px";
+    }
+    var velta = 0, spari = 0;
+    S.accounts.forEach(function(a){
+      if(a.kind === "velta") velta += Number(a.bal) || 0; else spari += Number(a.bal) || 0;
+    });
+    $("sumVelta").textContent = fmt(velta);
+    $("sumSpari").textContent = fmt(spari);
+    $("sumRad").textContent = fmt(S.radstofun);
+    renderAccounts();
+    renderDetail();
+    renderTransfer();
+  }
+
+  // ---------- millifærsla ----------
+  function renderTransfer(){
+    var sel = $("frAcct"), keep = sel.value;
+    sel.innerHTML = S.accounts.map(function(a){
+      return '<option value="' + a.id + '">' + esc(a.name) + '  ·  ' + fmt(a.bal) + ' ISK</option>';
+    }).join("");
+    sel.value = (keep && acct(keep)) ? keep : currentId;
+  }
+
+  function digits(v, max){
+    var d = String(v == null ? "" : v).replace(/\D/g, "");
+    return max ? d.slice(0, max) : d;
+  }
+  function ktFormat(v){
+    var d = digits(v, 10);
+    return d.length > 6 ? d.slice(0, 6) + "-" + d.slice(6) : d;
+  }
+  function twoDigit(n){ return (n < 10 ? "0" : "") + n; }
+  function today(){
+    var d = new Date();
+    return twoDigit(d.getDate()) + "." + twoDigit(d.getMonth() + 1) + "." + d.getFullYear();
+  }
+  function nowText(){
+    var d = new Date();
+    return today() + " kl. " + twoDigit(d.getHours()) + ":" + twoDigit(d.getMinutes());
+  }
+  function setErr(id, on, fieldIds){
+    $(id).classList.toggle("show", !!on);
+    (fieldIds || []).forEach(function(f){ $(f).classList.toggle("bad", !!on); });
+  }
+  function clearTransferForm(){
+    ["toKt","toName","toB1","toB2","toB3","trAmt","trNote"].forEach(function(id){ $(id).value = ""; });
+    ["errKt","errAcct","errAmt"].forEach(function(id){ $(id).classList.remove("show"); });
+    ["toKt","toB1","toB2","toB3","trAmt"].forEach(function(id){ $(id).classList.remove("bad"); });
+  }
+
+  function renderAccounts(){
+    var wrap = $("acctScroll");
+    var html = "";
+    [["velta","Veltureikningar"],["spari","Sparireikningar"]].forEach(function(pair){
+      var list = S.accounts.filter(function(a){ return a.kind === pair[0]; });
+      if(!list.length) return;
+      html += '<div class="sect"><h2>' + pair[1] + '</h2><div class="underline"></div></div>';
+      list.forEach(function(a){
+        html +=
+          '<div class="acct" data-id="' + a.id + '">' +
+            '<div class="top"><div><div class="nm">' + esc(a.name) + '</div>' +
+            '<div class="no">' + esc(a.num) + '</div></div><div class="dots">&#8943;</div></div>' +
+            '<div class="bot"><span class="l">Staða</span><span class="r">' + fmt(a.bal) + ' ISK</span></div>' +
+          '</div>';
+      });
+    });
+    wrap.innerHTML = html;
+  }
+
+  function renderDetail(){
+    var a = acct(currentId);
+    if(!a) return;
+    $("dName").textContent = a.name;
+    $("dNum").textContent = a.num;
+    var bt = fmt(a.bal), at = fmt(S.syncAvail ? a.bal : a.avail);
+    $("dBal").textContent = bt;
+    $("dAvail").textContent = at;
+    var longest = Math.max(bt.length, at.length), size = 28;
+    if(longest > 13) size = 18; else if(longest > 11) size = 21; else if(longest > 9) size = 24;
+    var amts = document.querySelectorAll("#s-detail .amt");
+    Array.prototype.forEach.call(amts, function(el){ el.style.fontSize = size + "px"; });
     renderTx();
+  }
+
+  function renderTx(){
+    var a = acct(currentId);
+    var q = $("search").value.trim().toLowerCase();
+    var list = $("txList");
+    var rows = (a.txs || []).filter(function(t){
+      return !q || txLabel(t).toLowerCase().indexOf(q) !== -1 || String(t.date).indexOf(q) !== -1;
+    });
+    if(!rows.length){ list.innerHTML = '<div class="empty">Engar færslur fundust</div>'; return; }
+    list.innerHTML = rows.map(function(t){
+      var pos = Number(t.amt) >= 0;
+      return '<div class="tx"><div><div class="name">' + esc(txLabel(t)) + '</div>' +
+        '<div class="date">' + esc(t.date) + '</div></div>' +
+        '<div class="r"><div class="val ' + (pos ? "pos" : "") + '">' + fmt(t.amt) + ' ISK</div>' +
+        '<div class="sub">Millifært</div></div></div>';
+    }).join("");
+  }
+
+  // ---------- secret sheet ----------
+  var openAcct = null;
+
+  function openSheet(){
+    $("setUser").value = S.user;
+    $("setRad").value = fmt(S.radstofun);
+    $("syncAvail").checked = !!S.syncAvail;
+    $("deductChk").checked = S.deduct !== false;
+    if(!openAcct || !acct(openAcct)) openAcct = currentId;
+    buildEditors();
+    buildTxPicker();
+    buildTxEditor();
+    $("overlay").classList.add("open");
+    document.querySelector(".panes").scrollTop = 0;
+    if(navigator.vibrate) navigator.vibrate(12);
+  }
+  function closeSheet(){ $("overlay").classList.remove("open"); }
+
+  function moneyText(v){
+    var str = String(v == null ? "" : v);
+    var neg = str.charAt(0) === "-";
+    var d = str.replace(/\D/g, "");
+    return (neg ? "-" : "") + (d ? fmt(parseInt(d, 10)) : "");
+  }
+
+  function buildEditors(){
+    $("acctEditors").innerHTML = S.accounts.map(function(a){
+      var open = a.id === openAcct;
+      return '<div class="arow' + (open ? " open" : "") + '" data-id="' + a.id + '">' +
+        '<button class="sum"><span><span class="nm">' + esc(a.name) + '</span>' +
+        '<span class="bl">' + esc(a.num) + '  ·  ' + fmt(a.bal) + ' ISK</span></span>' +
+        '<svg class="chev" width="14" height="9" viewBox="0 0 14 9" fill="none" stroke="#5b7a92" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6 6-6"/></svg></button>' +
+        '<div class="body">' +
+          '<div class="frow"><label>Heiti reiknings</label><input class="inp e-name" type="text" value="' + esc(a.name) + '"></div>' +
+          '<div class="frow"><label>Staða (ISK)</label><input class="inp money e-bal" type="text" inputmode="numeric" value="' + fmt(a.bal) + '"></div>' +
+          '<div class="quick">' +
+            '<button data-add="10000">+10þ</button>' +
+            '<button data-add="100000">+100þ</button>' +
+            '<button data-add="1000000">+1m</button>' +
+            '<button data-mul="10">×10</button>' +
+            '<button data-zero="1">0</button>' +
+          '</div>' +
+          '<div class="frow e-availrow"' + (S.syncAvail ? ' style="display:none"' : '') + '>' +
+            '<label>Ráðstöfun (ISK)</label><input class="inp money e-avail" type="text" inputmode="numeric" value="' + fmt(a.avail) + '"></div>' +
+          '<div class="frow"><label>Reikningsnúmer</label><input class="inp e-num" type="text" value="' + esc(a.num) + '"></div>' +
+          '<div class="segrow">' +
+            '<button class="seg e-kind ' + (a.kind === "velta" ? "on" : "") + '" data-kind="velta">Veltureikningur</button>' +
+            '<button class="seg e-kind ' + (a.kind === "spari" ? "on" : "") + '" data-kind="spari">Sparireikningur</button>' +
+          '</div>' +
+          '<button class="btn danger small" data-kill="' + a.id + '">Eyða reikningi</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function rowFor(id){ return $("acctEditors").querySelector('.arow[data-id="' + id + '"]'); }
+
+  function refreshRow(a){
+    var row = rowFor(a.id);
+    if(!row) return;
+    row.querySelector(".nm").textContent = a.name;
+    row.querySelector(".bl").textContent = a.num + "  ·  " + fmt(a.bal) + " ISK";
+  }
+
+  function buildTxPicker(){
+    var sel = $("txAcct"), keep = sel.value;
+    sel.innerHTML = S.accounts.map(function(a){
+      return '<option value="' + a.id + '">' + esc(a.name) + '</option>';
+    }).join("");
+    sel.value = (keep && acct(keep)) ? keep : openAcct;
+  }
+
+  function buildTxEditor(){
+    var a = acct($("txAcct").value || openAcct);
+    var box = $("txEditor");
+    if(!a || !a.txs || !a.txs.length){
+      box.innerHTML = '<div class="note" style="margin:0 0 6px">Engar færslur á þessum reikningi.</div>';
+      return;
+    }
+    box.innerHTML = a.txs.map(function(t, i){
+      var pos = Number(t.amt) >= 0;
+      return '<div class="txrow"><span class="tl"><b>' + esc(txLabel(t)) + '</b>' +
+        '<small>' + esc(t.date) + '</small></span>' +
+        '<span class="tv ' + (pos ? "pos" : "") + '">' + fmt(t.amt) + '</span>' +
+        '<button class="x" data-del="' + i + '" aria-label="Eyða">&#10005;</button></div>';
+    }).join("");
+  }
+
+  // ---------- events ----------
+  document.addEventListener("click", function(e){
+    var t = e.target;
+
+    var card = t.closest(".card[data-go], .mitem[data-go]");
+    if(card){ closeMenu(); show(card.getAttribute("data-go")); return; }
+
+    var row = t.closest(".acct[data-id]");
+    if(row){ currentId = row.getAttribute("data-id"); $("search").value = ""; show("detail"); return; }
+
+    if(t.closest(".menu-open")){ openMenu(); return; }
+    if(t.closest("#menuClose") || t.closest("#menuClose2")){ closeMenu(); return; }
+    if(t.closest(".nav-back")){
+      show(stack[stack.length - 2] || "home", { back:true });
+      return;
+    }
+    if(t.closest("#fabBtn")){ show("transfer"); return; }
+
+    // ---- settings sheet ----
+    var tab = t.closest(".tabs .tb");
+    if(tab){
+      var panes = document.querySelectorAll("#sheet .pane"), tbs = document.querySelectorAll(".tabs .tb");
+      Array.prototype.forEach.call(tbs, function(b){ b.classList.toggle("on", b === tab); });
+      Array.prototype.forEach.call(panes, function(pn){ pn.classList.toggle("on", pn.id === tab.getAttribute("data-pane")); });
+      document.querySelector(".panes").scrollTop = 0;
+      return;
+    }
+
+    var sum = t.closest(".arow .sum");
+    if(sum){
+      var row = sum.parentNode, id = row.getAttribute("data-id");
+      openAcct = row.classList.contains("open") ? null : id;
+      Array.prototype.forEach.call($("acctEditors").querySelectorAll(".arow"), function(r){
+        r.classList.toggle("open", r.getAttribute("data-id") === openAcct);
+      });
+      return;
+    }
+
+    var q = t.closest(".quick button");
+    if(q){
+      var a = acct(q.closest(".arow").getAttribute("data-id"));
+      if(q.getAttribute("data-add")) a.bal += parseInt(q.getAttribute("data-add"), 10);
+      else if(q.getAttribute("data-mul")) a.bal *= parseInt(q.getAttribute("data-mul"), 10);
+      else a.bal = 0;
+      if(S.syncAvail) a.avail = a.bal;
+      var box = q.closest(".arow");
+      box.querySelector(".e-bal").value = fmt(a.bal);
+      box.querySelector(".e-avail").value = fmt(a.avail);
+      refreshRow(a); save(); render();
+      if(navigator.vibrate) navigator.vibrate(8);
+      return;
+    }
+
+    var seg = t.closest(".seg.e-kind");
+    if(seg){
+      var sibs = seg.parentNode.querySelectorAll(".seg");
+      Array.prototype.forEach.call(sibs, function(x){ x.classList.remove("on"); });
+      seg.classList.add("on");
+      acct(seg.closest(".arow").getAttribute("data-id")).kind = seg.getAttribute("data-kind");
+      save(); render();
+      return;
+    }
+
+    var kill = t.closest("[data-kill]");
+    if(kill){
+      if(S.accounts.length <= 1){ toast("Þarf a.m.k. einn reikning"); return; }
+      var kid = kill.getAttribute("data-kill");
+      S.accounts = S.accounts.filter(function(x){ return x.id !== kid; });
+      if(currentId === kid) currentId = S.accounts[0].id;
+      if(openAcct === kid) openAcct = S.accounts[0].id;
+      save(); buildEditors(); buildTxPicker(); buildTxEditor(); render();
+      toast("Reikningi eytt");
+      return;
+    }
+
+    var del = t.closest("[data-del]");
+    if(del){
+      var da = acct($("txAcct").value);
+      da.txs.splice(parseInt(del.getAttribute("data-del"), 10), 1);
+      save(); buildTxEditor(); buildEditors(); render();
+      return;
+    }
+
+    var chip = t.closest(".chip");
+    if(chip){
+      $("txName").value = chip.id === "chipMe" ? S.user : chip.getAttribute("data-chip");
+      return;
+    }
   });
 
-  document.getElementById("search").addEventListener("input", renderTx);
+  // live editing inside the sheet
+  $("acctEditors").addEventListener("input", function(e){
+    var box = e.target.closest(".arow");
+    if(!box) return;
+    var a = acct(box.getAttribute("data-id"));
+    if(!a) return;
+    if(e.target.classList.contains("e-name")) a.name = e.target.value;
+    else if(e.target.classList.contains("e-num")) a.num = e.target.value;
+    else if(e.target.classList.contains("e-bal")){
+      a.bal = num(e.target.value);
+      if(S.syncAvail){ a.avail = a.bal; box.querySelector(".e-avail").value = fmt(a.bal); }
+    }
+    else if(e.target.classList.contains("e-avail")) a.avail = num(e.target.value);
+    refreshRow(a); save(); render();
+  });
 
+  // money fields tidy up when you leave them
+  $("sheet").addEventListener("focusout", function(e){
+    if(e.target.classList && e.target.classList.contains("money")) e.target.value = moneyText(e.target.value);
+  });
+
+  $("setUser").addEventListener("change", function(){
+    renameEverywhere(this.value);
+    this.value = S.user;
+    save(); buildEditors(); buildTxPicker(); buildTxEditor(); render();
+    toast("Nafni breytt");
+  });
+  $("setRad").addEventListener("input", function(){ S.radstofun = num(this.value); save(); render(); });
+  $("syncAvail").addEventListener("change", function(){
+    S.syncAvail = this.checked;
+    if(this.checked) S.accounts.forEach(function(a){ a.avail = a.bal; });
+    save(); buildEditors(); render();
+  });
+  $("deductChk").addEventListener("change", function(){ S.deduct = this.checked; save(); });
+
+  $("txAcct").addEventListener("change", buildTxEditor);
+
+  $("overlay").addEventListener("click", function(e){ if(e.target === $("overlay")) closeSheet(); });
+  $("closeSheet").addEventListener("click", closeSheet);
+  $("doneSheet").addEventListener("click", function(){ closeSheet(); toast("Vistað"); });
+
+  $("addAcct").addEventListener("click", function(){
+    var id = "a" + Date.now();
+    S.accounts.push({
+      id: id,
+      name: "Nýr sparireikningur",
+      num: "0133-15-" + String(Math.floor(100000 + Math.random() * 899999)),
+      kind: "spari", bal: 0, avail: 0, txs: []
+    });
+    openAcct = id;
+    save(); buildEditors(); buildTxPicker(); render();
+    var row = rowFor(id);
+    if(row) row.scrollIntoView({ block:"center" });
+  });
+
+  $("addTx").addEventListener("click", function(){
+    var a = acct($("txAcct").value);
+    if(!a) return;
+    var nm = $("txName").value.trim() || "Millifært";
+    var d = new Date();
+    var date = $("txDate").value.trim() ||
+      String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear();
+    var amt = num($("txAmt").value);
+    var tx = { date:date, amt:amt };
+    if(nm === S.user) tx.self = true; else tx.name = nm;
+    a.txs.unshift(tx);
+    $("txName").value = ""; $("txDate").value = ""; $("txAmt").value = "";
+    save(); buildTxEditor(); buildEditors(); render();
+    toast("Færsla bætt við");
+  });
+
+  $("resetBtn").addEventListener("click", function(){
+    S = defaults(); currentId = "a2"; openAcct = "a2";
+    save(); openSheet(); render();
+    toast("Endurstillt");
+  });
+
+  $("search").addEventListener("input", renderTx);
+  $("dDots").addEventListener("click", function(){ toast("Aðgerðir ekki í boði"); });
+
+  // menu
+  function openMenu(){ $("menu").classList.add("open"); }
+  function closeMenu(){ $("menu").classList.remove("open"); }
+
+  // ---------- secret gestures ----------
+  // 1) long-press the logo (700ms)   2) five quick taps on the logo
+  var pressTimer = null, taps = 0, tapTimer = null;
+  function armTriggers(){
+    var logos = document.querySelectorAll(".lg-trigger");
+    Array.prototype.forEach.call(logos, function(el){
+      el.addEventListener("touchstart", startPress, { passive:true });
+      el.addEventListener("mousedown", startPress);
+      ["touchend","touchmove","touchcancel","mouseup","mouseleave"].forEach(function(ev){
+        el.addEventListener(ev, cancelPress);
+      });
+      el.addEventListener("click", countTap);
+    });
+  }
+  function startPress(){ cancelPress(); pressTimer = setTimeout(openSheet, 700); }
+  function cancelPress(){ if(pressTimer){ clearTimeout(pressTimer); pressTimer = null; } }
+  function countTap(){
+    taps++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(function(){ taps = 0; }, 2500);
+    if(taps >= 5){ taps = 0; openSheet(); }
+  }
+  armTriggers();
+
+  // hash escape hatch: #stillingar
+  if(location.hash.toLowerCase().indexOf("stilling") !== -1) setTimeout(openSheet, 1600);
+
+  // ---------- add to home screen hint ----------
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIOS && !standalone && localStorage.getItem("lb_a2hs") !== "1"){
+    setTimeout(function(){ $("a2hs").classList.add("show"); }, 2600);
+  }
+  $("a2hsClose").addEventListener("click", function(){
+    $("a2hs").classList.remove("show");
+    try{ localStorage.setItem("lb_a2hs", "1"); }catch(e){}
+  });
+
+  // ---------- millifærslu-atburðir ----------
+  $("toKt").addEventListener("input", function(){ this.value = ktFormat(this.value); });
+  ["toB1","toB2","toB3"].forEach(function(id, i){
+    var max = [4, 2, 6][i];
+    $(id).addEventListener("input", function(){
+      this.value = digits(this.value, max);
+      if(this.value.length === max && i < 2) $(["toB1","toB2","toB3"][i + 1]).focus();
+    });
+  });
+  $("trAmt").addEventListener("input", function(){
+    var d = digits(this.value, 12);
+    this.value = d ? fmt(parseInt(d, 10)) : "";
+  });
+
+  [["toKt","errKt",["toKt"]],
+   ["toB1","errAcct",["toB1","toB2","toB3"]],
+   ["toB2","errAcct",["toB1","toB2","toB3"]],
+   ["toB3","errAcct",["toB1","toB2","toB3"]],
+   ["trAmt","errAmt",["trAmt"]]].forEach(function(t){
+    $(t[0]).addEventListener("input", function(){ setErr(t[1], false, t[2]); });
+  });
+
+  $("doTransfer").addEventListener("click", function(){
+    var kt = digits($("toKt").value);
+    var b1 = $("toB1").value, b2 = $("toB2").value, b3 = $("toB3").value;
+    var amt = num($("trAmt").value);
+    var bad = false;
+    if(kt.length !== 10){ setErr("errKt", true, ["toKt"]); bad = true; } else setErr("errKt", false, ["toKt"]);
+    if(b1.length !== 4 || b2.length !== 2 || b3.length !== 6){
+      setErr("errAcct", true, ["toB1","toB2","toB3"]); bad = true;
+    } else setErr("errAcct", false, ["toB1","toB2","toB3"]);
+    if(amt <= 0){ setErr("errAmt", true, ["trAmt"]); bad = true; } else setErr("errAmt", false, ["trAmt"]);
+    if(bad){ toast("Fylltu út reitina"); return; }
+
+    var from = acct($("frAcct").value);
+    var name = $("toName").value.trim();
+    var note = $("trNote").value.trim() || "Millifært";
+    var accountNo = b1 + "-" + b2 + "-" + b3;
+    var ktText = kt.slice(0, 6) + "-" + kt.slice(6);
+
+    $("processing").classList.add("on");
+    if(navigator.vibrate) navigator.vibrate(15);
+
+    setTimeout(function(){
+      if(S.deduct !== false){
+        from.bal -= amt;
+        from.avail = S.syncAvail ? from.bal : from.avail - amt;
+        from.txs.unshift({ name: name || ktText, date: today(), amt: -amt });
+      }
+      $("rcAmt").textContent = fmt(amt) + " ISK";
+      $("rcSub").textContent = "Millifærsla tókst";
+      $("rcName").textContent = name || "-";
+      $("rcKt").textContent = ktText;
+      $("rcAcct").textContent = accountNo;
+      $("rcFrom").textContent = from.name;
+      $("rcNote").textContent = note;
+      $("rcDate").textContent = nowText();
+      $("rcRef").textContent = String(Math.floor(100000000 + Math.random() * 899999999));
+      save();
+      $("processing").classList.remove("on");
+      show("receipt");
+    }, 1500);
+  });
+
+  $("rcDone").addEventListener("click", function(){ clearTransferForm(); goHome(); });
+  $("rcAgain").addEventListener("click", function(){
+    clearTransferForm();
+    goHome();
+    show("transfer");
+  });
+
+  // ---------- boot ----------
+  screenEl("home").classList.add("noanim","active");
+  setTimeout(function(){ screenEl("home").classList.remove("noanim"); }, 60);
   render();
+  setTimeout(function(){ $("splash").classList.add("gone"); }, 1300);
+  setTimeout(function(){ var s = $("splash"); if(s && s.parentNode) s.parentNode.removeChild(s); }, 1900);
+
+  // stop pull-to-refresh style bounce on non-scrolling areas
+  document.addEventListener("touchmove", function(e){
+    var t = e.target;
+    if(!t || typeof t.closest !== "function") return;
+    if(!t.closest(".scroll, .tx-list, .greyfill, .sheet, .menu-scroll")) e.preventDefault();
+  }, { passive:false });
+})();
 </script>
 </body>
 </html>
