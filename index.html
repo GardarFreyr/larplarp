@@ -275,12 +275,50 @@
   .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:150; display:none; align-items:flex-end; }
   .overlay.open{ display:flex; }
   .sheet{
-    background:#fff; width:100%; border-radius:18px 18px 0 0; padding:20px 20px calc(var(--safe-b) + 24px);
-    max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:#fff; width:100%; border-radius:18px 18px 0 0; padding:0 18px calc(var(--safe-b) + 6px);
+    height:88vh; display:flex; flex-direction:column; overflow:hidden;
     animation:up .26s cubic-bezier(.32,.72,0,1); box-shadow:0 -8px 30px rgba(0,0,0,.25);
   }
   @keyframes up{ from{ transform:translateY(100%);} to{ transform:translateY(0);} }
-  .grab{ width:40px; height:5px; border-radius:3px; background:#d3d9de; margin:0 auto 16px; }
+  .grab{ width:40px; height:5px; border-radius:3px; background:#d3d9de; margin:0 auto 14px; }
+  .sheet-head{ flex-shrink:0; background:#fff; padding:12px 0 6px; }
+  .panes{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; margin:0 -18px; padding:0 18px; }
+  .sh-top{ display:flex; align-items:center; justify-content:space-between; }
+  .xbtn{ background:#eef1f4; border:none; border-radius:50%; width:34px; height:34px; font-size:17px; color:#5b6b78; }
+  .tabs{ display:flex; gap:5px; background:#eef1f4; border-radius:12px; padding:4px; margin:14px 0 6px; }
+  .tabs .tb{ flex:1; border:none; background:none; padding:12px 4px; border-radius:9px; font-size:15px; font-weight:600; color:#5b6b78; }
+  .tabs .tb.on{ background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.14); }
+  .pane{ display:none; padding-top:12px; }
+  .pane.on{ display:block; }
+  .sheet-foot{ flex-shrink:0; background:#fff; border-top:1px solid var(--line); padding:12px 0 6px; }
+  .sheet-foot .btn{ margin-top:0; }
+  .note{ font-size:13px; color:var(--muted); margin-top:7px; line-height:1.45; }
+
+  .arow{ border:1px solid var(--line); border-radius:12px; margin-bottom:10px; overflow:hidden; background:#fff; }
+  .arow .sum{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:15px 14px; background:#fafbfc; border:none; text-align:left; }
+  .arow .sum .nm{ display:block; font-size:16px; font-weight:700; color:var(--ink); }
+  .arow .sum .bl{ display:block; font-size:14px; color:#5b7a92; margin-top:3px; }
+  .arow .sum .chev{ flex-shrink:0; transition:transform .2s; }
+  .arow.open .sum{ background:#eef4f9; }
+  .arow.open .chev{ transform:rotate(180deg); }
+  .arow .body{ display:none; padding:14px; border-top:1px solid var(--line); }
+  .arow.open .body{ display:block; }
+  .quick{ display:flex; gap:6px; margin:-4px 0 16px; }
+  .quick button{ flex:1; border:1px solid #d2d8de; background:#fff; border-radius:9px;
+    padding:11px 2px; font-size:14px; font-weight:600; color:var(--blue); }
+  .quick button:active{ background:#eaf2f9; }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin:-6px 0 14px; }
+  .chip{ border:1px solid #d2d8de; background:#fff; border-radius:20px; padding:8px 14px; font-size:13px; color:#5b6b78; }
+  .chip:active{ background:#eef1f4; }
+  .txrow{ display:flex; align-items:center; gap:10px; padding:12px 2px; border-bottom:1px solid var(--line); }
+  .txrow .tl{ flex:1; min-width:0; }
+  .txrow .tl b{ display:block; font-size:15px; color:var(--ink); font-weight:600; }
+  .txrow .tl small{ font-size:13px; color:var(--muted); }
+  .txrow .tv{ font-size:15px; font-weight:700; white-space:nowrap; }
+  .txrow .tv.pos{ color:var(--green); }
+  .txrow .x{ background:none; border:none; color:#c62333; font-size:19px; padding:4px 6px; flex-shrink:0; }
+  .btn.small{ padding:12px; font-size:15px; }
   .sheet h2{ font-size:22px; font-weight:700; color:var(--ink); }
   .sheet .hint{ font-size:14px; color:var(--muted); margin:4px 0 18px; }
   .slabel{ font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin:22px 0 10px; }
@@ -628,46 +666,75 @@
 <!-- ============ SECRET SHEET ============ -->
 <div class="overlay" id="overlay">
   <div class="sheet" id="sheet">
-    <div class="grab"></div>
-    <h2>Stillingar</h2>
-    <div class="hint">Falin stjórnborð — enginn annar sér þetta.</div>
-
-    <div class="frow">
-      <label>Nafn notanda</label>
-      <input class="inp" id="setUser" type="text">
-    </div>
-    <div class="frow">
-      <label>Til ráðstöfunar (ISK)</label>
-      <input class="inp" id="setRad" type="text" inputmode="numeric">
-    </div>
-    <div class="chk">
-      <input type="checkbox" id="deductChk">
-      <label for="deductChk" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Draga millifærslur af stöðunni</label>
-    </div>
-    <div class="chk">
-      <input type="checkbox" id="syncAvail">
-      <label for="syncAvail" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Láta Ráðstöfun fylgja Stöðu</label>
+    <div class="sheet-head">
+      <div class="grab"></div>
+      <div class="sh-top">
+        <h2>Stillingar</h2>
+        <button class="xbtn" id="closeSheet" aria-label="Loka">&#10005;</button>
+      </div>
+      <div class="tabs">
+        <button class="tb on" data-pane="p-accounts">Reikningar</button>
+        <button class="tb" data-pane="p-names">Nöfn</button>
+        <button class="tb" data-pane="p-tx">Færslur</button>
+      </div>
     </div>
 
-    <div class="slabel">Reikningar</div>
-    <div id="acctEditors"></div>
-    <button class="btn ghost" id="addAcct">+ Nýr reikningur</button>
+    <div class="panes">
 
-    <div class="slabel">Bæta við færslu</div>
-    <div class="frow">
-      <label>Reikningur</label>
-      <select class="inp" id="txAcct"></select>
+    <!-- Reikningar -->
+    <div class="pane on" id="p-accounts">
+      <div id="acctEditors"></div>
+      <button class="btn ghost" id="addAcct">+ Nýr reikningur</button>
     </div>
-    <div class="frow"><input class="inp" id="txName" type="text" placeholder="Nafn (t.d. Garðar Freyr Valdimarsson)"></div>
-    <div class="two">
-      <div class="frow"><input class="inp" id="txDate" type="text" placeholder="dd.mm.áááá"></div>
-      <div class="frow"><input class="inp" id="txAmt" type="text" inputmode="numeric" placeholder="50000 eða -2000"></div>
-    </div>
-    <button class="btn ghost" id="addTx">+ Bæta við færslu</button>
 
-    <button class="btn primary" id="saveBtn">Vista</button>
-    <button class="btn ghost" id="closeSheet">Loka</button>
-    <button class="btn danger" id="resetBtn">Endurstilla allt</button>
+    <!-- Nöfn -->
+    <div class="pane" id="p-names">
+      <div class="frow">
+        <label>Nafn notanda</label>
+        <input class="inp" id="setUser" type="text" placeholder="Nafn og eftirnafn">
+        <div class="note">Skiptu um nafn hér og það breytist alls staðar — í færslunum, á reikningunum og efst á reikningalistanum.</div>
+      </div>
+      <div class="frow">
+        <label>Til ráðstöfunar (ISK)</label>
+        <input class="inp money" id="setRad" type="text" inputmode="numeric">
+      </div>
+      <div class="chk">
+        <input type="checkbox" id="syncAvail">
+        <label for="syncAvail" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Ráðstöfun fylgir stöðunni</label>
+      </div>
+      <div class="chk">
+        <input type="checkbox" id="deductChk">
+        <label for="deductChk" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Draga millifærslur af stöðunni</label>
+      </div>
+      <button class="btn danger" id="resetBtn">Endurstilla allt</button>
+    </div>
+
+    <!-- Færslur -->
+    <div class="pane" id="p-tx">
+      <div class="frow">
+        <label>Reikningur</label>
+        <select class="inp" id="txAcct"></select>
+      </div>
+      <div id="txEditor"></div>
+      <div class="slabel">Bæta við færslu</div>
+      <div class="frow"><input class="inp" id="txName" type="text" placeholder="Nafn"></div>
+      <div class="chips">
+        <button class="chip" id="chipMe">Nafn notanda</button>
+        <button class="chip" data-chip="Launagreiðsla">Launagreiðsla</button>
+        <button class="chip" data-chip="Millifært">Millifært</button>
+      </div>
+      <div class="two">
+        <div class="frow"><input class="inp" id="txDate" type="text" placeholder="dd.mm.áááá"></div>
+        <div class="frow"><input class="inp money" id="txAmt" type="text" inputmode="numeric" placeholder="50000 eða -2000"></div>
+      </div>
+      <button class="btn ghost" id="addTx">+ Bæta við færslu</button>
+    </div>
+
+    </div>
+
+    <div class="sheet-foot">
+      <button class="btn primary" id="doneSheet">Loka</button>
+    </div>
   </div>
 </div>
 
@@ -695,30 +762,30 @@
       accounts: [
         { id:"a1", name:"Náman yngri", num:"0130-26-020136", kind:"velta", bal:6314, avail:6314, txs:[
           { name:"Kort - Hlöllabátar", date:"28.08.2026", amt:-2890 },
-          { name:"Garðar Freyr Valdimarsson", date:"24.08.2026", amt:10000 },
+          { self:true, date:"24.08.2026", amt:10000 },
           { name:"Kort - Bónus", date:"21.08.2026", amt:-8740 },
           { name:"Vasapeningar", date:"15.08.2026", amt:20000 }
         ]},
         { id:"a2", name:"Garðar sparibanki", num:"0123-15-148641", kind:"spari", bal:1067040, avail:1067040, txs:[
-          { name:"Garðar Freyr Valdimarsson", date:"30.08.2026", amt:-5000 },
-          { name:"Garðar Freyr Valdimarsso", date:"24.08.2026", amt:50000 },
-          { name:"Garðar Freyr Valdimarsso", date:"23.08.2026", amt:50000 },
-          { name:"Garðar Freyr Valdimarsson", date:"20.08.2026", amt:-2000 },
-          { name:"Garðar Freyr Valdimarsson", date:"18.08.2026", amt:-10000 },
+          { self:true, date:"30.08.2026", amt:-5000 },
+          { self:true, date:"24.08.2026", amt:50000 },
+          { self:true, date:"23.08.2026", amt:50000 },
+          { self:true, date:"20.08.2026", amt:-2000 },
+          { self:true, date:"18.08.2026", amt:-10000 },
           { name:"Launagreiðsla", date:"15.08.2026", amt:420000 },
-          { name:"Garðar Freyr Valdimarsson", date:"12.08.2026", amt:-25000 },
+          { self:true, date:"12.08.2026", amt:-25000 },
           { name:"Millifærsla", date:"09.08.2026", amt:150000 },
-          { name:"Garðar Freyr Valdimarsson", date:"01.08.2026", amt:-40000 },
+          { self:true, date:"01.08.2026", amt:-40000 },
           { name:"Launagreiðsla", date:"15.07.2026", amt:420000 }
         ]},
         { id:"a3", name:"Framtíðargrunnur, verðtryggður", num:"0123-18-032869", kind:"spari", bal:645512, avail:645512, txs:[
           { name:"Vextir", date:"01.08.2026", amt:4312 },
-          { name:"Garðar Freyr Valdimarsson", date:"15.07.2026", amt:100000 },
+          { self:true, date:"15.07.2026", amt:100000 },
           { name:"Vextir", date:"01.07.2026", amt:4108 }
         ]},
         { id:"a4", name:"Framtíðargrunnur, verðtryggður", num:"0130-18-751474", kind:"spari", bal:258716, avail:258716, txs:[
           { name:"Vextir", date:"01.08.2026", amt:1730 },
-          { name:"Garðar Freyr Valdimarsson", date:"20.07.2026", amt:50000 }
+          { self:true, date:"20.07.2026", amt:50000 }
         ]}
       ]
     };
@@ -733,6 +800,12 @@
       if(!raw) return defaults();
       var o = JSON.parse(raw);
       if(!o || !Array.isArray(o.accounts) || !o.accounts.length) return defaults();
+      o.accounts.forEach(function(a){
+        (a.txs || []).forEach(function(t){
+          if(!t.self && t.name && o.user &&
+             (t.name === o.user || (o.user.indexOf(t.name) === 0 && t.name.length > 10))) t.self = true;
+        });
+      });
       return o;
     }catch(e){ return defaults(); }
   }
@@ -759,6 +832,27 @@
   function esc(s){
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
   }
+  function txLabel(t){ return t.self ? S.user : (t.name || ""); }
+
+  // renaming the user rewrites the name wherever it shows up
+  function renameEverywhere(newName){
+    newName = (newName || "").trim();
+    var oldName = S.user;
+    if(!newName || newName === oldName) return;
+    var oldFirst = oldName.split(/\s+/)[0], newFirst = newName.split(/\s+/)[0];
+    function swap(str){
+      if(!str) return str;
+      var out = str.split(oldName).join(newName);
+      if(oldFirst && oldFirst.length > 2) out = out.split(oldFirst).join(newFirst);
+      return out;
+    }
+    S.accounts.forEach(function(a){
+      a.name = swap(a.name);
+      (a.txs || []).forEach(function(t){ if(!t.self) t.name = swap(t.name); });
+    });
+    S.user = newName;
+  }
+
   var toastT;
   function toast(msg){
     var t = $("toast");
@@ -888,12 +982,12 @@
     var q = $("search").value.trim().toLowerCase();
     var list = $("txList");
     var rows = (a.txs || []).filter(function(t){
-      return !q || t.name.toLowerCase().indexOf(q) !== -1 || String(t.date).indexOf(q) !== -1;
+      return !q || txLabel(t).toLowerCase().indexOf(q) !== -1 || String(t.date).indexOf(q) !== -1;
     });
     if(!rows.length){ list.innerHTML = '<div class="empty">Engar færslur fundust</div>'; return; }
     list.innerHTML = rows.map(function(t){
       var pos = Number(t.amt) >= 0;
-      return '<div class="tx"><div><div class="name">' + esc(t.name) + '</div>' +
+      return '<div class="tx"><div><div class="name">' + esc(txLabel(t)) + '</div>' +
         '<div class="date">' + esc(t.date) + '</div></div>' +
         '<div class="r"><div class="val ' + (pos ? "pos" : "") + '">' + fmt(t.amt) + ' ISK</div>' +
         '<div class="sub">Millifært</div></div></div>';
@@ -901,58 +995,91 @@
   }
 
   // ---------- secret sheet ----------
+  var openAcct = null;
+
   function openSheet(){
     $("setUser").value = S.user;
-    $("setRad").value = S.radstofun;
+    $("setRad").value = fmt(S.radstofun);
     $("syncAvail").checked = !!S.syncAvail;
     $("deductChk").checked = S.deduct !== false;
+    if(!openAcct || !acct(openAcct)) openAcct = currentId;
     buildEditors();
     buildTxPicker();
+    buildTxEditor();
     $("overlay").classList.add("open");
+    document.querySelector(".panes").scrollTop = 0;
     if(navigator.vibrate) navigator.vibrate(12);
   }
   function closeSheet(){ $("overlay").classList.remove("open"); }
 
+  function moneyText(v){
+    var str = String(v == null ? "" : v);
+    var neg = str.charAt(0) === "-";
+    var d = str.replace(/\D/g, "");
+    return (neg ? "-" : "") + (d ? fmt(parseInt(d, 10)) : "");
+  }
+
   function buildEditors(){
-    $("acctEditors").innerHTML = S.accounts.map(function(a, i){
-      return '<div class="accbox" data-id="' + a.id + '">' +
-        '<div class="hd"><span class="t">' + (i + 1) + '. ' + esc(a.name) + '</span>' +
-        '<button class="kill" data-kill="' + a.id + '">Eyða</button></div>' +
-        '<div class="frow"><label>Heiti</label><input class="inp e-name" type="text" value="' + esc(a.name) + '"></div>' +
-        '<div class="two">' +
+    $("acctEditors").innerHTML = S.accounts.map(function(a){
+      var open = a.id === openAcct;
+      return '<div class="arow' + (open ? " open" : "") + '" data-id="' + a.id + '">' +
+        '<button class="sum"><span><span class="nm">' + esc(a.name) + '</span>' +
+        '<span class="bl">' + esc(a.num) + '  ·  ' + fmt(a.bal) + ' ISK</span></span>' +
+        '<svg class="chev" width="14" height="9" viewBox="0 0 14 9" fill="none" stroke="#5b7a92" stroke-width="2" stroke-linecap="round"><path d="M1 1l6 6 6-6"/></svg></button>' +
+        '<div class="body">' +
+          '<div class="frow"><label>Heiti reiknings</label><input class="inp e-name" type="text" value="' + esc(a.name) + '"></div>' +
+          '<div class="frow"><label>Staða (ISK)</label><input class="inp money e-bal" type="text" inputmode="numeric" value="' + fmt(a.bal) + '"></div>' +
+          '<div class="quick">' +
+            '<button data-add="10000">+10þ</button>' +
+            '<button data-add="100000">+100þ</button>' +
+            '<button data-add="1000000">+1m</button>' +
+            '<button data-mul="10">×10</button>' +
+            '<button data-zero="1">0</button>' +
+          '</div>' +
+          '<div class="frow e-availrow"' + (S.syncAvail ? ' style="display:none"' : '') + '>' +
+            '<label>Ráðstöfun (ISK)</label><input class="inp money e-avail" type="text" inputmode="numeric" value="' + fmt(a.avail) + '"></div>' +
           '<div class="frow"><label>Reikningsnúmer</label><input class="inp e-num" type="text" value="' + esc(a.num) + '"></div>' +
-          '<div class="frow"><label>Staða (ISK)</label><input class="inp e-bal" type="text" inputmode="numeric" value="' + a.bal + '"></div>' +
-        '</div>' +
-        '<div class="frow"><label>Ráðstöfun (ISK)</label><input class="inp e-avail" type="text" inputmode="numeric" value="' + a.avail + '"></div>' +
-        '<div class="segrow">' +
-          '<button class="seg e-kind ' + (a.kind === "velta" ? "on" : "") + '" data-kind="velta">Veltureikningur</button>' +
-          '<button class="seg e-kind ' + (a.kind === "spari" ? "on" : "") + '" data-kind="spari">Sparireikningur</button>' +
+          '<div class="segrow">' +
+            '<button class="seg e-kind ' + (a.kind === "velta" ? "on" : "") + '" data-kind="velta">Veltureikningur</button>' +
+            '<button class="seg e-kind ' + (a.kind === "spari" ? "on" : "") + '" data-kind="spari">Sparireikningur</button>' +
+          '</div>' +
+          '<button class="btn danger small" data-kill="' + a.id + '">Eyða reikningi</button>' +
         '</div>' +
       '</div>';
     }).join("");
   }
 
-  function buildTxPicker(){
-    $("txAcct").innerHTML = S.accounts.map(function(a){
-      return '<option value="' + a.id + '"' + (a.id === currentId ? " selected" : "") + '>' + esc(a.name) + '</option>';
-    }).join("");
+  function rowFor(id){ return $("acctEditors").querySelector('.arow[data-id="' + id + '"]'); }
+
+  function refreshRow(a){
+    var row = rowFor(a.id);
+    if(!row) return;
+    row.querySelector(".nm").textContent = a.name;
+    row.querySelector(".bl").textContent = a.num + "  ·  " + fmt(a.bal) + " ISK";
   }
 
-  function readEditors(){
-    var boxes = $("acctEditors").querySelectorAll(".accbox");
-    Array.prototype.forEach.call(boxes, function(box){
-      var a = acct(box.getAttribute("data-id"));
-      if(!a) return;
-      var nm = box.querySelector(".e-name").value.trim();
-      if(nm) a.name = nm;
-      var nu = box.querySelector(".e-num").value.trim();
-      if(nu) a.num = nu;
-      a.bal = num(box.querySelector(".e-bal").value);
-      a.avail = num(box.querySelector(".e-avail").value);
-      var on = box.querySelector(".e-kind.on");
-      if(on) a.kind = on.getAttribute("data-kind");
-      if(S.syncAvail) a.avail = a.bal;
-    });
+  function buildTxPicker(){
+    var sel = $("txAcct"), keep = sel.value;
+    sel.innerHTML = S.accounts.map(function(a){
+      return '<option value="' + a.id + '">' + esc(a.name) + '</option>';
+    }).join("");
+    sel.value = (keep && acct(keep)) ? keep : openAcct;
+  }
+
+  function buildTxEditor(){
+    var a = acct($("txAcct").value || openAcct);
+    var box = $("txEditor");
+    if(!a || !a.txs || !a.txs.length){
+      box.innerHTML = '<div class="note" style="margin:0 0 6px">Engar færslur á þessum reikningi.</div>';
+      return;
+    }
+    box.innerHTML = a.txs.map(function(t, i){
+      var pos = Number(t.amt) >= 0;
+      return '<div class="txrow"><span class="tl"><b>' + esc(txLabel(t)) + '</b>' +
+        '<small>' + esc(t.date) + '</small></span>' +
+        '<span class="tv ' + (pos ? "pos" : "") + '">' + fmt(t.amt) + '</span>' +
+        '<button class="x" data-del="' + i + '" aria-label="Eyða">&#10005;</button></div>';
+    }).join("");
   }
 
   // ---------- events ----------
@@ -973,67 +1100,152 @@
     }
     if(t.closest("#fabBtn")){ show("transfer"); return; }
 
-    if(t.closest(".seg.e-kind")){
-      var seg = t.closest(".seg.e-kind");
-      var sibs = seg.parentNode.querySelectorAll(".seg");
-      Array.prototype.forEach.call(sibs, function(s){ s.classList.remove("on"); });
-      seg.classList.add("on");
+    // ---- settings sheet ----
+    var tab = t.closest(".tabs .tb");
+    if(tab){
+      var panes = document.querySelectorAll("#sheet .pane"), tbs = document.querySelectorAll(".tabs .tb");
+      Array.prototype.forEach.call(tbs, function(b){ b.classList.toggle("on", b === tab); });
+      Array.prototype.forEach.call(panes, function(pn){ pn.classList.toggle("on", pn.id === tab.getAttribute("data-pane")); });
+      document.querySelector(".panes").scrollTop = 0;
       return;
     }
+
+    var sum = t.closest(".arow .sum");
+    if(sum){
+      var row = sum.parentNode, id = row.getAttribute("data-id");
+      openAcct = row.classList.contains("open") ? null : id;
+      Array.prototype.forEach.call($("acctEditors").querySelectorAll(".arow"), function(r){
+        r.classList.toggle("open", r.getAttribute("data-id") === openAcct);
+      });
+      return;
+    }
+
+    var q = t.closest(".quick button");
+    if(q){
+      var a = acct(q.closest(".arow").getAttribute("data-id"));
+      if(q.getAttribute("data-add")) a.bal += parseInt(q.getAttribute("data-add"), 10);
+      else if(q.getAttribute("data-mul")) a.bal *= parseInt(q.getAttribute("data-mul"), 10);
+      else a.bal = 0;
+      if(S.syncAvail) a.avail = a.bal;
+      var box = q.closest(".arow");
+      box.querySelector(".e-bal").value = fmt(a.bal);
+      box.querySelector(".e-avail").value = fmt(a.avail);
+      refreshRow(a); save(); render();
+      if(navigator.vibrate) navigator.vibrate(8);
+      return;
+    }
+
+    var seg = t.closest(".seg.e-kind");
+    if(seg){
+      var sibs = seg.parentNode.querySelectorAll(".seg");
+      Array.prototype.forEach.call(sibs, function(x){ x.classList.remove("on"); });
+      seg.classList.add("on");
+      acct(seg.closest(".arow").getAttribute("data-id")).kind = seg.getAttribute("data-kind");
+      save(); render();
+      return;
+    }
+
     var kill = t.closest("[data-kill]");
     if(kill){
       if(S.accounts.length <= 1){ toast("Þarf a.m.k. einn reikning"); return; }
-      var id = kill.getAttribute("data-kill");
-      readEditors();
-      S.accounts = S.accounts.filter(function(a){ return a.id !== id; });
-      if(currentId === id) currentId = S.accounts[0].id;
-      save(); buildEditors(); buildTxPicker(); render();
+      var kid = kill.getAttribute("data-kill");
+      S.accounts = S.accounts.filter(function(x){ return x.id !== kid; });
+      if(currentId === kid) currentId = S.accounts[0].id;
+      if(openAcct === kid) openAcct = S.accounts[0].id;
+      save(); buildEditors(); buildTxPicker(); buildTxEditor(); render();
+      toast("Reikningi eytt");
+      return;
+    }
+
+    var del = t.closest("[data-del]");
+    if(del){
+      var da = acct($("txAcct").value);
+      da.txs.splice(parseInt(del.getAttribute("data-del"), 10), 1);
+      save(); buildTxEditor(); buildEditors(); render();
+      return;
+    }
+
+    var chip = t.closest(".chip");
+    if(chip){
+      $("txName").value = chip.id === "chipMe" ? S.user : chip.getAttribute("data-chip");
       return;
     }
   });
 
-  $("overlay").addEventListener("click", function(e){ if(e.target === $("overlay")) closeSheet(); });
-  $("closeSheet").addEventListener("click", closeSheet);
-
-  $("saveBtn").addEventListener("click", function(){
-    S.user = $("setUser").value.trim() || S.user;
-    S.radstofun = num($("setRad").value);
-    S.syncAvail = $("syncAvail").checked;
-    S.deduct = $("deductChk").checked;
-    readEditors();
-    save(); render(); closeSheet();
-    toast("Vistað");
+  // live editing inside the sheet
+  $("acctEditors").addEventListener("input", function(e){
+    var box = e.target.closest(".arow");
+    if(!box) return;
+    var a = acct(box.getAttribute("data-id"));
+    if(!a) return;
+    if(e.target.classList.contains("e-name")) a.name = e.target.value;
+    else if(e.target.classList.contains("e-num")) a.num = e.target.value;
+    else if(e.target.classList.contains("e-bal")){
+      a.bal = num(e.target.value);
+      if(S.syncAvail){ a.avail = a.bal; box.querySelector(".e-avail").value = fmt(a.bal); }
+    }
+    else if(e.target.classList.contains("e-avail")) a.avail = num(e.target.value);
+    refreshRow(a); save(); render();
   });
 
+  // money fields tidy up when you leave them
+  $("sheet").addEventListener("focusout", function(e){
+    if(e.target.classList && e.target.classList.contains("money")) e.target.value = moneyText(e.target.value);
+  });
+
+  $("setUser").addEventListener("change", function(){
+    renameEverywhere(this.value);
+    this.value = S.user;
+    save(); buildEditors(); buildTxPicker(); buildTxEditor(); render();
+    toast("Nafni breytt");
+  });
+  $("setRad").addEventListener("input", function(){ S.radstofun = num(this.value); save(); render(); });
+  $("syncAvail").addEventListener("change", function(){
+    S.syncAvail = this.checked;
+    if(this.checked) S.accounts.forEach(function(a){ a.avail = a.bal; });
+    save(); buildEditors(); render();
+  });
+  $("deductChk").addEventListener("change", function(){ S.deduct = this.checked; save(); });
+
+  $("txAcct").addEventListener("change", buildTxEditor);
+
+  $("overlay").addEventListener("click", function(e){ if(e.target === $("overlay")) closeSheet(); });
+  $("closeSheet").addEventListener("click", closeSheet);
+  $("doneSheet").addEventListener("click", function(){ closeSheet(); toast("Vistað"); });
+
   $("addAcct").addEventListener("click", function(){
-    readEditors();
+    var id = "a" + Date.now();
     S.accounts.push({
-      id: "a" + Date.now(),
+      id: id,
       name: "Nýr sparireikningur",
       num: "0133-15-" + String(Math.floor(100000 + Math.random() * 899999)),
       kind: "spari", bal: 0, avail: 0, txs: []
     });
+    openAcct = id;
     save(); buildEditors(); buildTxPicker(); render();
-    $("sheet").scrollTop = $("sheet").scrollHeight;
+    var row = rowFor(id);
+    if(row) row.scrollIntoView({ block:"center" });
   });
 
   $("addTx").addEventListener("click", function(){
     var a = acct($("txAcct").value);
     if(!a) return;
-    var name = $("txName").value.trim() || "Millifært";
+    var nm = $("txName").value.trim() || "Millifært";
     var d = new Date();
     var date = $("txDate").value.trim() ||
       String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + "." + d.getFullYear();
     var amt = num($("txAmt").value);
-    a.txs.unshift({ name:name, date:date, amt:amt });
+    var tx = { date:date, amt:amt };
+    if(nm === S.user) tx.self = true; else tx.name = nm;
+    a.txs.unshift(tx);
     $("txName").value = ""; $("txDate").value = ""; $("txAmt").value = "";
-    save(); render();
+    save(); buildTxEditor(); buildEditors(); render();
     toast("Færsla bætt við");
   });
 
   $("resetBtn").addEventListener("click", function(){
-    S = defaults(); currentId = "a2";
-    save(); buildEditors(); buildTxPicker(); render(); closeSheet();
+    S = defaults(); currentId = "a2"; openAcct = "a2";
+    save(); openSheet(); render();
     toast("Endurstillt");
   });
 

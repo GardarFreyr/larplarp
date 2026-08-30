@@ -43,23 +43,34 @@ með nafni móttakandans. Viltu að tölurnar haldist óbreyttar? Slökktu á
 - eða **ýttu 5 sinnum** hratt á það.
 - eða opnaðu slóðina með `#stillingar` aftast.
 
-### Að breyta stöðunni
+Valmyndin er í þremur flipum og **allt vistast jafnóðum** — engin þörf á að ýta á
+vista, `Loka` lokar bara blaðinu.
 
-Opnaðu földu valmyndina, skrunaðu niður að **Reikningar**, skrifaðu nýja tölu í
-reitinn **Staða (ISK)** hjá þeim reikningi sem þú vilt breyta og ýttu á **Vista**.
-Skrifaðu bara tölustafi (`1067040`) — punktarnir bætast við sjálfkrafa.
-Ráðstöfun fylgir stöðunni sjálfkrafa nema þú takir hakið af.
+### Reikningar
 
-Þar er líka hægt að breyta:
+Hver reikningur er samanbrotinn: heiti, reikningsnúmer og staða í einni línu.
+Ýttu á hann til að opna hann.
 
-- nafni notanda og „Til ráðstöfunar“
-- heiti, reikningsnúmeri og ráðstöfun á hverjum reikningi
-- hvort reikningur telst velta- eða sparireikningur
-- bæta við nýjum reikningi eða eyða reikningi
-- bæta við færslu á hvaða reikning sem er
-- **Endurstilla allt** setur allt í upphaflegt horf
+- **Staða (ISK)** – skrifaðu nýja tölu, punktarnir koma sjálfir þegar þú ferð úr reitnum.
+- **Flýtihnappar** `+10þ` `+100þ` `+1m` `×10` `0` – breyta stöðunni með einum smelli.
+- Heiti reiknings, reikningsnúmer og velta- eða sparireikningur.
+- **Eyða reikningi**, og `+ Nýr reikningur` neðst.
 
-Allt vistast sjálfkrafa svo tölurnar haldast þótt appinu sé lokað.
+### Nöfn
+
+- **Nafn notanda** – skiptu um nafn og það breytist **alls staðar**: í öllum færslum
+  sem eru á þig, í reikningsheitum (`Garðar sparibanki` verður `Sigríður sparibanki`)
+  og efst á reikningalistanum. Þannig geta vinir þínir sett sitt eigið nafn inn.
+- **Til ráðstöfunar**, hakið **Ráðstöfun fylgir stöðunni** og hakið
+  **Draga millifærslur af stöðunni**.
+- **Endurstilla allt** setur allt í upphaflegt horf.
+
+### Færslur
+
+Veldu reikning, sjáðu allar færslurnar hans og eyddu þeim með rauða krossinum.
+Neðst bætir þú við nýrri færslu — flýtihnapparnir **Nafn notanda**,
+**Launagreiðsla** og **Millifært** fylla nafnið út. Dagsetning er í dag ef reiturinn
+er tómur, og mínus fyrir framan upphæð gerir hana að úttekt (`-2000`).
 
 ## Skrár
 
