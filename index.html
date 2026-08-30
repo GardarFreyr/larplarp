@@ -210,6 +210,67 @@
   }
   .logout:active{ background:#245f95; }
 
+
+  /* ---------- Millifærsla (form) ---------- */
+  .form{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:24px 22px 30px; background:#fff; }
+  .fsect{ font-family:var(--serif); font-size:24px; font-weight:600; color:var(--ink); padding-bottom:10px; margin-top:10px; }
+  .fsect + .underline{ height:2px; background:var(--ink); margin-bottom:22px; }
+  .fgroup{ margin-bottom:20px; }
+  .fgroup > label{ display:block; font-size:16px; font-weight:600; color:#3d5f7d; margin-bottom:8px; }
+  .field{
+    width:100%; border:1.5px solid #ccd3da; border-radius:5px; padding:16px 18px;
+    font-size:20px; color:var(--ink); outline:none; background:#fff;
+  }
+  .field:focus{ border-color:var(--blue); }
+  .field::placeholder{ color:#9aa6b1; }
+  .field.bad{ border-color:#c62333; }
+  select.field{
+    -webkit-appearance:none; appearance:none; padding-right:46px;
+    background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%2316395a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 18px center;
+  }
+  .acctnum{ display:flex; align-items:center; gap:8px; }
+  .acctnum .field{ text-align:center; padding:16px 6px; min-width:0; }
+  .acctnum .b1{ flex:2.2; } .acctnum .b2{ flex:1.4; } .acctnum .b3{ flex:3; }
+  .acctnum .dash{ color:#9aa6b1; font-size:20px; }
+  .amountwrap{ position:relative; }
+  .amountwrap .isk{ position:absolute; right:18px; top:50%; transform:translateY(-50%); font-size:17px; color:#7a8794; pointer-events:none; }
+  .amountwrap .field{ padding-right:56px; font-size:24px; font-weight:600; }
+  .err{ display:none; color:#c62333; font-size:14px; margin-top:7px; }
+  .err.show{ display:block; }
+  .bottombar{
+    flex-shrink:0; background:#fff; border-top:1px solid var(--line);
+    padding:14px 18px calc(var(--safe-b) + 14px);
+  }
+  .bigbtn{ width:100%; background:var(--blue); color:#fff; border:none; border-radius:5px; padding:18px; font-size:20px; }
+  .bigbtn:active{ background:#245f95; }
+  .bigbtn.pale{ background:#eef1f4; color:var(--ink); margin-top:10px; }
+
+  /* ---------- Kvittun ---------- */
+  .receipt{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:18px 22px 24px; background:#fff; text-align:center; }
+  .tick{
+    width:98px; height:98px; border-radius:50%; background:var(--green);
+    display:flex; align-items:center; justify-content:center; margin:10px auto 20px;
+    animation:pop .45s cubic-bezier(.2,.9,.3,1.3);
+  }
+  .receipt h1{ font-family:var(--serif); font-size:34px; font-weight:600; color:var(--ink); }
+  .receipt .ramt{ font-size:33px; font-weight:600; color:var(--ink); margin-top:12px; }
+  .receipt .rsub{ font-size:17px; color:#3d5f7d; margin:8px 0 22px; }
+  .rlist{ text-align:left; border-top:1px solid var(--line); }
+  .rrow{ display:flex; justify-content:space-between; gap:16px; padding:16px 2px; border-bottom:1px solid var(--line); font-size:17px; }
+  .rrow .k{ color:#5b7a92; flex-shrink:0; }
+  .rrow .v{ color:var(--ink); font-weight:600; text-align:right; word-break:break-word; }
+
+  /* ---------- Vinnsla ---------- */
+  #processing{
+    position:fixed; inset:0; z-index:140; background:rgba(255,255,255,.97);
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  }
+  #processing.on{ display:flex; }
+  .spin{ width:54px; height:54px; border:4px solid #dbe3ea; border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  #processing .ptxt{ font-size:19px; color:var(--ink); }
+
   /* ---------- Secret sheet ---------- */
   .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:150; display:none; align-items:flex-end; }
   .overlay.open{ display:flex; }
@@ -351,7 +412,7 @@
   <section class="screen" id="s-detail">
     <div class="hdr">
       <div class="hdr-row rel">
-        <button class="iconbtn" id="backBtn" aria-label="Til baka">
+        <button class="iconbtn nav-back" id="backBtn" aria-label="Til baka">
           <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 12l10 9M2 12h26"/></svg>
         </button>
         <div class="hdr-mid">Bankareikningar</div>
@@ -382,6 +443,109 @@
     <div class="tx-list" id="txList"></div>
   </section>
 
+  <!-- ============ MILLIFÆRA ============ -->
+  <section class="screen" id="s-transfer">
+    <div class="hdr">
+      <div class="hdr-row rel">
+        <button class="iconbtn nav-back" aria-label="Til baka">
+          <svg width="30" height="24" viewBox="0 0 30 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L2 12l10 9M2 12h26"/></svg>
+        </button>
+        <div class="hdr-mid">Millifæra</div>
+        <button class="iconbtn menu-open" aria-label="Valmynd">
+          <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="form">
+      <div class="fsect">Af reikningi</div><div class="underline"></div>
+      <div class="fgroup">
+        <select class="field" id="frAcct"></select>
+      </div>
+
+      <div class="fsect">Móttakandi</div><div class="underline"></div>
+
+      <div class="fgroup">
+        <label for="toKt">Kennitala</label>
+        <input class="field" id="toKt" type="text" inputmode="numeric" placeholder="000000-0000" maxlength="11">
+        <div class="err" id="errKt">Sláðu inn 10 stafa kennitölu</div>
+      </div>
+
+      <div class="fgroup">
+        <label for="toName">Nafn móttakanda</label>
+        <input class="field" id="toName" type="text" placeholder="Nafn">
+      </div>
+
+      <div class="fgroup">
+        <label>Reikningsnúmer</label>
+        <div class="acctnum">
+          <input class="field b1" id="toB1" type="text" inputmode="numeric" placeholder="0000" maxlength="4">
+          <span class="dash">-</span>
+          <input class="field b2" id="toB2" type="text" inputmode="numeric" placeholder="00" maxlength="2">
+          <span class="dash">-</span>
+          <input class="field b3" id="toB3" type="text" inputmode="numeric" placeholder="000000" maxlength="6">
+        </div>
+        <div class="err" id="errAcct">Sláðu inn fullt reikningsnúmer</div>
+      </div>
+
+      <div class="fsect">Upphæð</div><div class="underline"></div>
+
+      <div class="fgroup">
+        <div class="amountwrap">
+          <input class="field" id="trAmt" type="text" inputmode="numeric" placeholder="0">
+          <span class="isk">ISK</span>
+        </div>
+        <div class="err" id="errAmt">Sláðu inn upphæð</div>
+      </div>
+
+      <div class="fgroup">
+        <label for="trNote">Skýring</label>
+        <input class="field" id="trNote" type="text" placeholder="Millifært" maxlength="24">
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <button class="bigbtn" id="doTransfer">Millifæra</button>
+    </div>
+  </section>
+
+  <!-- ============ KVITTUN ============ -->
+  <section class="screen" id="s-receipt">
+    <div class="hdr">
+      <div class="hdr-row rel">
+        <div class="spacer"></div>
+        <div class="hdr-mid">Kvittun</div>
+        <button class="iconbtn menu-open" aria-label="Valmynd">
+          <svg width="30" height="22" viewBox="0 0 30 22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M2 3h26M2 11h26M2 19h26"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="receipt">
+      <div class="tick">
+        <svg width="52" height="40" viewBox="0 0 52 40" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21l14 14L48 5"/></svg>
+      </div>
+      <h1>Greitt</h1>
+      <div class="ramt" id="rcAmt">0 ISK</div>
+      <div class="rsub" id="rcSub">Millifærsla tókst</div>
+
+      <div class="rlist">
+        <div class="rrow"><span class="k">Móttakandi</span><span class="v" id="rcName">-</span></div>
+        <div class="rrow"><span class="k">Kennitala</span><span class="v" id="rcKt">-</span></div>
+        <div class="rrow"><span class="k">Reikningur</span><span class="v" id="rcAcct">-</span></div>
+        <div class="rrow"><span class="k">Af reikningi</span><span class="v" id="rcFrom">-</span></div>
+        <div class="rrow"><span class="k">Skýring</span><span class="v" id="rcNote">-</span></div>
+        <div class="rrow"><span class="k">Dagsetning</span><span class="v" id="rcDate">-</span></div>
+        <div class="rrow"><span class="k">Tilvísun</span><span class="v" id="rcRef">-</span></div>
+      </div>
+    </div>
+
+    <div class="bottombar">
+      <button class="bigbtn" id="rcDone">Loka</button>
+      <button class="bigbtn pale" id="rcAgain">Millifæra aftur</button>
+    </div>
+  </section>
+
 </div>
 
 <!-- ============ MENU ============ -->
@@ -408,7 +572,7 @@
         <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="1.6"><rect x="2" y="8" width="48" height="30" rx="4"/><rect x="9" y="15" width="11" height="8" rx="1.6"/><path d="M28 28h16M9 28h13"/></svg>
         <span class="lb">Kort</span>
       </button>
-      <button class="mitem">
+      <button class="mitem" data-go="transfer">
         <svg width="52" height="44" viewBox="0 0 52 44" fill="none" stroke="#16395a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4L5 22"/><path d="M5 8v14h14"/><path d="M29 40l18-18"/><path d="M47 36V22H33"/></svg>
         <span class="lb">Millifærslur</span>
       </button>
@@ -477,6 +641,10 @@
       <input class="inp" id="setRad" type="text" inputmode="numeric">
     </div>
     <div class="chk">
+      <input type="checkbox" id="deductChk">
+      <label for="deductChk" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Draga millifærslur af stöðunni</label>
+    </div>
+    <div class="chk">
       <input type="checkbox" id="syncAvail">
       <label for="syncAvail" style="margin:0;font-weight:400;font-size:15px;color:var(--ink)">Láta Ráðstöfun fylgja Stöðu</label>
     </div>
@@ -503,6 +671,8 @@
   </div>
 </div>
 
+<div id="processing"><div class="spin"></div><div class="ptxt">Millifæri…</div></div>
+
 <div class="toast" id="toast"></div>
 
 <div class="a2hs" id="a2hs">
@@ -521,6 +691,7 @@
       user: "Garðar Freyr Valdimarsson",
       radstofun: 59302,
       syncAvail: true,
+      deduct: true,
       accounts: [
         { id:"a1", name:"Náman yngri", num:"0130-26-020136", kind:"velta", bal:6314, avail:6314, txs:[
           { name:"Kort - Hlöllabátar", date:"28.08.2026", amt:-2890 },
@@ -615,6 +786,12 @@
     }
     render();
   }
+  function goHome(){
+    stack.forEach(function(n){ screenEl(n).classList.remove("active","behind"); });
+    stack = ["home"];
+    screenEl("home").classList.add("active");
+    render();
+  }
 
   // ---------- rendering ----------
   function render(){
@@ -633,6 +810,43 @@
     $("sumRad").textContent = fmt(S.radstofun);
     renderAccounts();
     renderDetail();
+    renderTransfer();
+  }
+
+  // ---------- millifærsla ----------
+  function renderTransfer(){
+    var sel = $("frAcct"), keep = sel.value;
+    sel.innerHTML = S.accounts.map(function(a){
+      return '<option value="' + a.id + '">' + esc(a.name) + '  ·  ' + fmt(a.bal) + ' ISK</option>';
+    }).join("");
+    sel.value = (keep && acct(keep)) ? keep : currentId;
+  }
+
+  function digits(v, max){
+    var d = String(v == null ? "" : v).replace(/\D/g, "");
+    return max ? d.slice(0, max) : d;
+  }
+  function ktFormat(v){
+    var d = digits(v, 10);
+    return d.length > 6 ? d.slice(0, 6) + "-" + d.slice(6) : d;
+  }
+  function twoDigit(n){ return (n < 10 ? "0" : "") + n; }
+  function today(){
+    var d = new Date();
+    return twoDigit(d.getDate()) + "." + twoDigit(d.getMonth() + 1) + "." + d.getFullYear();
+  }
+  function nowText(){
+    var d = new Date();
+    return today() + " kl. " + twoDigit(d.getHours()) + ":" + twoDigit(d.getMinutes());
+  }
+  function setErr(id, on, fieldIds){
+    $(id).classList.toggle("show", !!on);
+    (fieldIds || []).forEach(function(f){ $(f).classList.toggle("bad", !!on); });
+  }
+  function clearTransferForm(){
+    ["toKt","toName","toB1","toB2","toB3","trAmt","trNote"].forEach(function(id){ $(id).value = ""; });
+    ["errKt","errAcct","errAmt"].forEach(function(id){ $(id).classList.remove("show"); });
+    ["toKt","toB1","toB2","toB3","trAmt"].forEach(function(id){ $(id).classList.remove("bad"); });
   }
 
   function renderAccounts(){
@@ -691,6 +905,7 @@
     $("setUser").value = S.user;
     $("setRad").value = S.radstofun;
     $("syncAvail").checked = !!S.syncAvail;
+    $("deductChk").checked = S.deduct !== false;
     buildEditors();
     buildTxPicker();
     $("overlay").classList.add("open");
@@ -752,8 +967,11 @@
 
     if(t.closest(".menu-open")){ openMenu(); return; }
     if(t.closest("#menuClose") || t.closest("#menuClose2")){ closeMenu(); return; }
-    if(t.closest("#backBtn")){ show("accounts", { back:true }); return; }
-    if(t.closest("#fabBtn")){ show("accounts"); return; }
+    if(t.closest(".nav-back")){
+      show(stack[stack.length - 2] || "home", { back:true });
+      return;
+    }
+    if(t.closest("#fabBtn")){ show("transfer"); return; }
 
     if(t.closest(".seg.e-kind")){
       var seg = t.closest(".seg.e-kind");
@@ -781,6 +999,7 @@
     S.user = $("setUser").value.trim() || S.user;
     S.radstofun = num($("setRad").value);
     S.syncAvail = $("syncAvail").checked;
+    S.deduct = $("deductChk").checked;
     readEditors();
     save(); render(); closeSheet();
     toast("Vistað");
@@ -862,6 +1081,77 @@
   $("a2hsClose").addEventListener("click", function(){
     $("a2hs").classList.remove("show");
     try{ localStorage.setItem("lb_a2hs", "1"); }catch(e){}
+  });
+
+  // ---------- millifærslu-atburðir ----------
+  $("toKt").addEventListener("input", function(){ this.value = ktFormat(this.value); });
+  ["toB1","toB2","toB3"].forEach(function(id, i){
+    var max = [4, 2, 6][i];
+    $(id).addEventListener("input", function(){
+      this.value = digits(this.value, max);
+      if(this.value.length === max && i < 2) $(["toB1","toB2","toB3"][i + 1]).focus();
+    });
+  });
+  $("trAmt").addEventListener("input", function(){
+    var d = digits(this.value, 12);
+    this.value = d ? fmt(parseInt(d, 10)) : "";
+  });
+
+  [["toKt","errKt",["toKt"]],
+   ["toB1","errAcct",["toB1","toB2","toB3"]],
+   ["toB2","errAcct",["toB1","toB2","toB3"]],
+   ["toB3","errAcct",["toB1","toB2","toB3"]],
+   ["trAmt","errAmt",["trAmt"]]].forEach(function(t){
+    $(t[0]).addEventListener("input", function(){ setErr(t[1], false, t[2]); });
+  });
+
+  $("doTransfer").addEventListener("click", function(){
+    var kt = digits($("toKt").value);
+    var b1 = $("toB1").value, b2 = $("toB2").value, b3 = $("toB3").value;
+    var amt = num($("trAmt").value);
+    var bad = false;
+    if(kt.length !== 10){ setErr("errKt", true, ["toKt"]); bad = true; } else setErr("errKt", false, ["toKt"]);
+    if(b1.length !== 4 || b2.length !== 2 || b3.length !== 6){
+      setErr("errAcct", true, ["toB1","toB2","toB3"]); bad = true;
+    } else setErr("errAcct", false, ["toB1","toB2","toB3"]);
+    if(amt <= 0){ setErr("errAmt", true, ["trAmt"]); bad = true; } else setErr("errAmt", false, ["trAmt"]);
+    if(bad){ toast("Fylltu út reitina"); return; }
+
+    var from = acct($("frAcct").value);
+    var name = $("toName").value.trim();
+    var note = $("trNote").value.trim() || "Millifært";
+    var accountNo = b1 + "-" + b2 + "-" + b3;
+    var ktText = kt.slice(0, 6) + "-" + kt.slice(6);
+
+    $("processing").classList.add("on");
+    if(navigator.vibrate) navigator.vibrate(15);
+
+    setTimeout(function(){
+      if(S.deduct !== false){
+        from.bal -= amt;
+        from.avail = S.syncAvail ? from.bal : from.avail - amt;
+        from.txs.unshift({ name: name || ktText, date: today(), amt: -amt });
+      }
+      $("rcAmt").textContent = fmt(amt) + " ISK";
+      $("rcSub").textContent = "Millifærsla tókst";
+      $("rcName").textContent = name || "-";
+      $("rcKt").textContent = ktText;
+      $("rcAcct").textContent = accountNo;
+      $("rcFrom").textContent = from.name;
+      $("rcNote").textContent = note;
+      $("rcDate").textContent = nowText();
+      $("rcRef").textContent = String(Math.floor(100000000 + Math.random() * 899999999));
+      save();
+      $("processing").classList.remove("on");
+      show("receipt");
+    }, 1500);
+  });
+
+  $("rcDone").addEventListener("click", function(){ clearTransferForm(); goHome(); });
+  $("rcAgain").addEventListener("click", function(){
+    clearTransferForm();
+    goHome();
+    show("transfer");
   });
 
   // ---------- boot ----------
