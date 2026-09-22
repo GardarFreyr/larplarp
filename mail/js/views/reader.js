@@ -231,6 +231,7 @@ function moreMenu(m) {
   const inInbox = m.labelIds.includes('INBOX');
   const starred = m.labelIds.includes('STARRED');
   sheet({
+    cancel: true,
     items: [
       { label: 'Reply', icon: 'reply', run: () => emit('compose', { mode: 'reply', message: m }) },
       { label: 'Reply All', icon: 'replyAll', run: () => emit('compose', { mode: 'replyAll', message: m }) },

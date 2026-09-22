@@ -72,18 +72,19 @@ function renderHeader() {
   const sidebarBadge = $('#navInboxCount');
   if (sidebarBadge) { sidebarBadge.textContent = state.unread > 999 ? '999+' : String(state.unread); sidebarBadge.hidden = !state.unread; }
   if (selecting) {
+    const n = selected.size;
     const allRead = [...selected].every((id) => !rows.find((r) => r.id === id)?.labelIds.includes('UNREAD'));
-    const allStarred = selected.size > 0 && [...selected].every((id) => rows.find((r) => r.id === id)?.labelIds.includes('STARRED'));
     const inTrash = state.folder === 'TRASH';
+    const dis = n ? '' : 'disabled';
     headerEl.className = 'pane-header selection-header';
     headerEl.innerHTML = `
       <button type="button" class="icon-btn" data-action="end-select" aria-label="Cancel selection">${icon('x')}</button>
-      <span class="count" aria-live="polite">${selected.size} selected</span>
-      ${inTrash ? `<button type="button" class="icon-btn" data-bulk="restore" aria-label="Restore" ${selected.size ? '' : 'disabled'}>${icon('undo')}</button>` : `
-      <button type="button" class="icon-btn" data-bulk="archive" aria-label="Archive" ${selected.size ? '' : 'disabled'}>${icon('archive')}</button>
-      <button type="button" class="icon-btn" data-bulk="${allRead ? 'unread' : 'read'}" aria-label="${allRead ? 'Mark as unread' : 'Mark as read'}" ${selected.size ? '' : 'disabled'}>${icon(allRead ? 'mail' : 'mailOpen')}</button>
-      <button type="button" class="icon-btn${allStarred ? ' is-on' : ''}" data-bulk="${allStarred ? 'unstar' : 'star'}" aria-label="${allStarred ? 'Remove star' : 'Star'}" ${selected.size ? '' : 'disabled'}>${icon('star')}</button>
-      <button type="button" class="icon-btn" data-bulk="delete" aria-label="Delete" ${selected.size ? '' : 'disabled'}>${icon('trash')}</button>`}`;
+      <span class="count" aria-live="polite">${n} selected</span>
+      ${inTrash
+        ? `<button type="button" class="icon-btn" data-bulk="restore" aria-label="Restore" ${dis}>${icon('undo')}</button>`
+        : `<button type="button" class="icon-btn" data-bulk="delete" aria-label="Delete" ${dis}>${icon('trash')}</button>
+           <button type="button" class="icon-btn" data-bulk="${allRead ? 'unread' : 'read'}" aria-label="${allRead ? 'Mark as unread' : 'Mark as read'}" ${dis}>${icon(allRead ? 'mail' : 'mailOpen')}</button>
+           <button type="button" class="icon-btn" data-action="bulk-menu" aria-label="More actions" ${dis}>${icon('more')}</button>`}`;
     return;
   }
   headerEl.className = 'pane-header is-mobile-only';
@@ -169,7 +170,7 @@ function renderRows() {
   footerEl.innerHTML = nextPageToken ? '<button type="button" class="link-btn" data-action="more">Load more</button>' : '';
   if (rows.length) { statusEl.innerHTML = ''; return; }
   if (offline) {
-    statusEl.innerHTML = emptyState({ iconName: 'wifiOff', title: 'No connection', text: 'Check your internet connection and try again.', action: { id: 'retry', label: 'Try again', icon: 'refresh' } });
+    statusEl.innerHTML = emptyState({ iconName: 'wifiOff', title: 'No connection', text: 'You’re offline. Check your internet connection and try again.', action: { id: 'retry', label: 'Try again' } });
   } else if (state.folder === 'INBOX' && state.filter === 'all') {
     statusEl.innerHTML = emptyState({ iconName: 'mail', title: 'You’re all caught up!', text: 'No new emails in your inbox.', action: { id: 'compose', label: 'Compose email', icon: 'compose' } });
   } else {
@@ -271,6 +272,21 @@ function bulk(action) {
   })[action]();
 }
 
+function bulkMenu() {
+  const ids = [...selected];
+  const allRead = ids.every((id) => !rows.find((r) => r.id === id)?.labelIds.includes('UNREAD'));
+  const allStarred = ids.every((id) => rows.find((r) => r.id === id)?.labelIds.includes('STARRED'));
+  sheet({
+    cancel: true,
+    items: [
+      { label: 'Archive', icon: 'archive', run: () => bulk('archive') },
+      { label: allRead ? 'Mark as unread' : 'Mark as read', icon: allRead ? 'mail' : 'mailOpen', run: () => bulk(allRead ? 'unread' : 'read') },
+      { label: allStarred ? 'Remove star' : 'Star', icon: 'star', run: () => bulk(allStarred ? 'unstar' : 'star') },
+      { label: 'Delete', icon: 'trash', danger: true, run: () => bulk('delete') },
+    ],
+  });
+}
+
 function rowAction(id, action) {
   const m = rows.find((r) => r.id === id);
   if (!m) return;
@@ -293,7 +309,7 @@ function onClick(ev) {
   if (wrap && t.closest('.email-row')) {
     if (wrap.dataset.suppressClick) { delete wrap.dataset.suppressClick; return; }
     const id = wrap.dataset.id;
-    if (selecting || ev.metaKey || ev.ctrlKey || (t.closest('.avatar') && matchMedia('(hover: hover)').matches)) {
+    if (selecting || ev.metaKey || ev.ctrlKey || (t.closest('.avatar, .select-mark') && matchMedia('(hover: hover)').matches)) {
       startSelecting();
       toggleSelected(id);
       return;
@@ -312,6 +328,7 @@ function onClick(ev) {
     case 'retry': load(); break;
     case 'more': load({ append: true }); break;
     case 'end-select': endSelecting(); break;
+    case 'bulk-menu': bulkMenu(); break;
     case 'mailbox-menu': mailboxMenu(); break;
     // 'compose' and 'open-search' bubble to the app shell
   }

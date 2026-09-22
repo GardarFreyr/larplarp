@@ -36,7 +36,9 @@ function quoteFor(mode, m) {
       plain: `\n\n${head}\n\n${text}`,
     };
   }
-  const intro = `On ${fullDate(m.date)}, ${m.from} wrote:`;
+  const d = new Date(m.date);
+  const sender = parseAddressList(m.from)[0];
+  const intro = `On ${d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}, at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${sender ? (sender.name || sender.email) : m.from} wrote:`;
   return {
     label: intro,
     text,
@@ -106,26 +108,24 @@ export async function openComposer(opts = {}) {
 function render(title) {
   const scrim = html(`<div class="scrim composer-scrim" role="presentation">
     <form class="composer" role="dialog" aria-modal="true" aria-labelledby="cTitle" novalidate>
-      <div class="composer-top">
+      <div class="composer-bar">
         <button type="button" class="icon-btn" data-c="close" aria-label="Close">${icon('x')}</button>
-        <span class="draft-status" id="cStatus" aria-live="polite"></span>
-      </div>
-      <div class="composer-title">
         <h1 id="cTitle">${e(title)}</h1>
-        <button type="submit" class="round-btn" id="cSend" aria-label="Send" disabled>${icon('send')}</button>
+        <button type="submit" class="icon-btn send-btn" id="cSend" aria-label="Send" disabled>${icon('send')}</button>
       </div>
       <div id="cBanner"></div>
       <div class="composer-scroll">
         <div class="c-field"><span class="c-label" id="lblTo">To</span><div id="cTo" style="flex:1;min-width:0"></div></div>
-        <div class="c-field" id="cCcToggleRow"><button type="button" class="c-label" data-c="ccbcc" style="flex:1;text-align:left;width:auto">Cc / Bcc</button>
+        <div class="c-field" id="cCcToggleRow"><button type="button" class="c-label" data-c="ccbcc" style="flex:1;text-align:left;width:auto">Cc/Bcc</button>
           <button type="button" class="icon-btn" data-c="ccbcc" aria-label="Add Cc or Bcc">${icon('plus')}</button></div>
         <div class="c-field" id="cCcRow" hidden><span class="c-label">Cc</span><div id="cCc" style="flex:1;min-width:0"></div></div>
         <div class="c-field" id="cBccRow" hidden><span class="c-label">Bcc</span><div id="cBcc" style="flex:1;min-width:0"></div></div>
-        <div class="c-field"><label for="cSubject" class="sr-only">Subject</label><input id="cSubject" type="text" placeholder="Subject" autocomplete="off"></div>
+        <div class="c-field"><label for="cSubject" class="c-label">Subject</label><input id="cSubject" type="text" autocomplete="off"></div>
         <div class="editor" id="cEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message" data-placeholder="Write your email…"></div>
         <div id="cQuote"></div>
         <div class="c-attachments"><div class="attachments" id="cAttachments"></div></div>
       </div>
+      <div class="draft-pill" id="cStatus" aria-live="polite" hidden></div>
       <div class="format-bar" id="cFormat" hidden role="toolbar" aria-label="Formatting">
         <button type="button" class="icon-btn" data-fmt="bold" aria-label="Bold">${icon('bold')}</button>
         <button type="button" class="icon-btn" data-fmt="italic" aria-label="Italic">${icon('italic')}</button>
@@ -133,7 +133,7 @@ function render(title) {
         <button type="button" class="icon-btn" data-fmt="insertUnorderedList" aria-label="Bulleted list">${icon('list')}</button>
       </div>
       <div class="composer-tools" role="toolbar" aria-label="Composer tools">
-        <button type="button" class="icon-btn" data-c="format" aria-label="Formatting" aria-pressed="false">${icon('type')}</button>
+        <button type="button" class="icon-btn" data-c="format" aria-label="Formatting" aria-pressed="false"><span class="aa" aria-hidden="true">Aa</span></button>
         <button type="button" class="icon-btn" data-c="attach" aria-label="Attach files">${icon('clip')}</button>
         <button type="button" class="icon-btn" data-c="image" aria-label="Attach images">${icon('image')}</button>
         <button type="button" class="icon-btn" data-c="link" aria-label="Insert link">${icon('link')}</button>
@@ -212,7 +212,27 @@ function update() {
   $('#cSend', c.el).disabled = !canSend();
 }
 
-function setStatus(text) { if (c) $('#cStatus', c.el).textContent = text; }
+function ago(ms) {
+  const m = Math.floor((Date.now() - ms) / 60000);
+  if (m < 1) return 'just now';
+  if (m === 1) return '1 minute ago';
+  if (m < 60) return `${m} minutes ago`;
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Status pill above the toolbar. `saved` shows a check and a live "saved … ago". */
+function setStatus(text, { saved = false } = {}) {
+  if (!c) return;
+  const el = $('#cStatus', c.el);
+  clearInterval(c.statusTimer);
+  if (!text) { el.hidden = true; return; }
+  el.hidden = false;
+  if (!saved) { el.textContent = text; return; }
+  const at = Date.now();
+  const paint = () => { el.innerHTML = `${icon('checkCircle')}<span>${e(text)} ${ago(at)}</span>`; };
+  paint();
+  c.statusTimer = setInterval(paint, 30000);
+}
 
 // ---------------------------------------------------------------- attachments
 
@@ -339,10 +359,10 @@ async function saveDraft() {
       const res = mine.draftId ? await gmail.updateDraft(mine.draftId, raw, mine.threadId) : await gmail.createDraft(raw, mine.threadId);
       mine.draftId = res.id;
       if (res.message?.threadId) mine.threadId = res.message.threadId;
-      if (mine === c) { setStatus('Draft saved'); saveLocal(); }
+      if (mine === c) { setStatus('Draft saved', { saved: true }); saveLocal(); }
       emit('drafts-changed');
     } catch (err) {
-      if (mine === c) setStatus(err instanceof gmail.NetworkError ? 'Saved on this device' : 'Draft not saved');
+      if (mine === c) setStatus(err instanceof gmail.NetworkError ? 'Saved on this device' : 'Draft not saved', { saved: err instanceof gmail.NetworkError });
     } finally {
       mine.saving = null;
       if (mine.saveAgain) { mine.saveAgain = false; if (mine === c) saveDraft(); }
@@ -361,7 +381,7 @@ async function send() {
   const mine = c;
   mine.sending = true;
   clearTimeout(mine.saveTimer);
-  $('#cSend', mine.el).innerHTML = '<span class="spinner" style="border-color:var(--on-primary);border-top-color:transparent"></span>';
+  $('#cSend', mine.el).innerHTML = '<span class="spinner"></span>';
   update();
   $('#cBanner', mine.el).innerHTML = '';
   if (mine.saving) await mine.saving.catch(() => {});
@@ -380,7 +400,8 @@ async function send() {
     const offline = err instanceof gmail.NetworkError;
     $('#cBanner', mine.el).innerHTML = banner({
       error: true,
-      text: offline ? 'Failed to send. You’re offline.' : `Failed to send. ${err instanceof gmail.AuthError ? 'Sign in again, then retry.' : err.message}`,
+      text: 'Failed to send',
+      sub: offline ? 'Check your connection and try again.' : err instanceof gmail.AuthError ? 'Sign in again, then try again.' : err.message,
       action: { id: 'retry', label: 'Retry' },
     });
     if (offline) {
@@ -406,6 +427,7 @@ function sendLater() {
 function closeNow() {
   if (!c) return;
   clearTimeout(c.saveTimer);
+  clearInterval(c.statusTimer);
   c.attachments.forEach((a) => a.thumb && URL.revokeObjectURL(a.thumb));
   c.popLayer();
   c.el.remove();
@@ -432,12 +454,13 @@ async function requestClose() {
     return closeNow();
   }
   const choice = await confirmDialog({
-    title: 'Discard this message?',
-    body: 'You haven’t sent it yet. You can keep it in Drafts instead.',
+    title: 'Discard draft?',
+    body: 'Your draft will be permanently deleted.',
+    row: true,
     actions: [
-      { label: 'Save draft', value: 'save', kind: 'primary' },
-      { label: 'Discard', value: 'discard', kind: 'danger' },
       { label: 'Cancel', value: null, kind: 'quiet' },
+      { label: 'Discard', value: 'discard', kind: 'danger' },
+      { label: 'Keep in Drafts', value: 'save', kind: 'link' },
     ],
   });
   if (!c) return;

@@ -192,11 +192,11 @@ await test('draft autosaves, and closing asks before discarding', async () => {
   await page.click('.sidebar [data-action="compose"]');
   await page.click('#cEditor');
   await page.keyboard.type('Unfinished thought');
-  await page.waitForFunction(() => document.getElementById('cStatus')?.textContent === 'Draft saved', null, { timeout: 5000 });
+  await page.waitForFunction(() => (document.getElementById('cStatus')?.textContent || '').startsWith('Draft saved'), null, { timeout: 5000 });
   assert(mock.db.drafts.length === 1, 'draft should be created');
   await page.click('[data-c="close"]');
   await page.waitForSelector('.dialog');
-  assert(await page.isVisible('text=Discard this message?'), 'confirmation missing');
+  assert(await page.isVisible('text=Discard draft?'), 'confirmation missing');
   await shot(page, 'desktop-discard');
   await page.click('.dialog button:has-text("Discard")');
   await page.waitForSelector('.composer', { state: 'detached' });
@@ -256,7 +256,8 @@ await test('multi-select and bulk archive', async () => {
   await page.click('.row-wrap[data-id="m4"] .avatar');
   assert((await page.textContent('.selection-header .count')) === '2 selected', 'selection count');
   await shot(page, 'desktop-select');
-  await page.click('[data-bulk="archive"]');
+  await page.click('[data-action="bulk-menu"]');
+  await page.click('.sheet button:has-text("Archive")');
   await page.waitForFunction(() => !document.querySelector('.row-wrap[data-id="m3"]'));
   assert(!mock.db.messages[3].labelIds.includes('INBOX') && !mock.db.messages[4].labelIds.includes('INBOX'), 'not archived in Gmail');
   assert(await page.isVisible('.toast >> text=Undo'), 'undo missing');

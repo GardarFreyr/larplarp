@@ -41,19 +41,21 @@ export function toast(message, { action, duration } = {}) {
 
 // ---------------------------------------------------------------- dialog
 /** actions: [{ label, value, kind: 'primary'|'danger'|'quiet' }] → resolves with the chosen value (or null). */
-export function confirmDialog({ title, body = '', actions }) {
+export function confirmDialog({ title, body = '', actions, row = false }) {
   return new Promise((resolve) => {
     const scrim = html(`<div class="scrim" role="presentation">
       <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-b">
         <h2 id="dlg-t">${e(title)}</h2>${body ? `<p id="dlg-b">${e(body)}</p>` : ''}
-        <div class="dialog-actions"></div>
+        <div class="dialog-actions${row ? ' is-row' : ''}"></div>
       </div></div>`);
     const done = (v) => { pop(); scrim.remove(); resolve(v); };
     const pop = pushLayer(() => done(null));
     actions.forEach((a) => {
-      const b = html(`<button type="button" class="btn btn-block btn-${a.kind || 'quiet'}">${e(a.label)}</button>`);
+      const b = html(a.kind === 'link'
+        ? `<button type="button" class="link-btn dialog-link">${e(a.label)}</button>`
+        : `<button type="button" class="btn btn-block btn-${a.kind || 'quiet'}">${e(a.label)}</button>`);
       b.onclick = () => done(a.value);
-      $('.dialog-actions', scrim).append(b);
+      (a.kind === 'link' ? $('.dialog', scrim) : $('.dialog-actions', scrim)).append(b);
     });
     scrim.addEventListener('click', (ev) => { if (ev.target === scrim) done(null); });
     document.body.append(scrim);
@@ -63,8 +65,9 @@ export function confirmDialog({ title, body = '', actions }) {
 
 // ---------------------------------------------------------------- action sheet
 /** items: [{ label, icon, danger, checked, run } | '-' ] */
-export function sheet({ title, items }) {
-  const scrim = html(`<div class="scrim sheet-scrim" role="presentation"><div class="sheet" role="menu">${title ? `<div class="sheet-title">${e(title)}</div>` : ''}</div></div>`);
+export function sheet({ title, items, cancel = false }) {
+  const scrim = html(`<div class="scrim sheet-scrim" role="presentation"><div class="sheet-stack"><div class="sheet" role="menu">${title ? `<div class="sheet-title">${e(title)}</div>` : ''}</div>
+    ${cancel ? '<button type="button" class="sheet sheet-cancel">Cancel</button>' : ''}</div></div>`);
   const box = $('.sheet', scrim);
   const close = () => { pop(); scrim.remove(); };
   const pop = pushLayer(close);
@@ -75,7 +78,7 @@ export function sheet({ title, items }) {
     b.onclick = () => { close(); it.run(); };
     box.append(b);
   });
-  scrim.addEventListener('click', (ev) => { if (ev.target === scrim) close(); });
+  scrim.addEventListener('click', (ev) => { if (ev.target === scrim || ev.target.closest('.sheet-cancel')) close(); });
   document.body.append(scrim);
   $('button', box)?.focus();
   return close;
@@ -120,6 +123,7 @@ export function emailRow(m, { who = 'from', current = false, selected = false } 
     <div class="email-row${unread ? ' is-unread' : ''}${selected ? ' is-selected' : ''}" role="button" tabindex="0"
       aria-label="${e(label)}" ${current ? 'aria-current="true"' : ''} ${selected ? 'aria-pressed="true"' : ''}>
       ${unread ? '<span class="unread-dot" aria-hidden="true"></span>' : ''}
+      <span class="select-mark" aria-hidden="true">${icon('check')}</span>
       ${avatar(avatarName)}
       <div class="row-main">
         <div class="row-top">
@@ -151,8 +155,8 @@ export function emptyState({ iconName = 'mail', title, text = '', action }) {
     ${action ? `<button type="button" class="btn btn-primary" data-action="${e(action.id)}">${action.icon ? icon(action.icon) : ''}${e(action.label)}</button>` : ''}</div>`;
 }
 
-export function banner({ text, iconName = 'alert', action, error = false }) {
-  return `<div class="banner${error ? ' is-error' : ''}" role="${error ? 'alert' : 'status'}">${icon(iconName)}<span>${e(text)}</span>
+export function banner({ text, sub = '', iconName = 'alert', action, error = false }) {
+  return `<div class="banner${error ? ' is-error' : ''}" role="${error ? 'alert' : 'status'}">${icon(iconName)}<span>${sub ? `<strong>${e(text)}</strong><small>${e(sub)}</small>` : e(text)}</span>
     ${action ? `<button type="button" data-action="${e(action.id)}">${e(action.label)}</button>` : ''}</div>`;
 }
 
