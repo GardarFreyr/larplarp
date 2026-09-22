@@ -1,14 +1,19 @@
 # Mail
 
-A simple email app for Gmail. It runs entirely in your browser, and there is no server.
+A calm, minimal email client for Gmail. It runs entirely in your browser, and there is no server.
 Your emails go straight between your browser and Google.
 
-- Sign in with your Google account
-- Read your Inbox, Starred, Sent, Drafts and Trash
-- Search, star, mark as unread, archive and delete
-- Write, reply to and forward emails, and save drafts
-- Download attachments
-- Works on desktop (three columns) and on phone (tab bar), and can be installed on your home screen
+- **Inbox** with All / Unread / Starred / Archive filters, plus Starred, Sent, Drafts and Trash
+- **Read** emails with attachments (PDF and image preview, share, download all), Reply, Reply All and Forward
+- **Write** with multiple recipients, Cc/Bcc, bold/italic/underline/lists, links, file and image attachments
+- **Drafts save automatically** to Gmail and to this device, so nothing is lost when you go offline
+- **Failed sends** keep your message open with Retry, or queue it to send when you're back online
+- **Search** across sender, recipients, subject and body, with From / Date / Has attachment / Unread filters and recent searches
+- **Swipe** right to archive and left for Read / Star / Delete (touch screens). Long-press, or click an avatar, to select several emails
+- **Light and dark mode** (follows your device, or pick one in Settings)
+- **Notifications** for new mail while the app is open
+- **Several Google accounts** on one device
+- Desktop three-column layout; phone layout with a tab bar. Installable to your home screen.
 
 ## One-time setup (about 5 minutes)
 
@@ -57,5 +62,31 @@ Click **Continue**. Only the test users you added can sign in.
 ## Notes
 
 - Permission used: `gmail.modify` (read, send, label and trash). The app can't permanently delete email.
-- Google sign-in lasts about an hour. When it runs out, tap **Reconnect** in the message that appears.
+- Google sign-in lasts about an hour. When it runs out, tap **Sign in** in the message that appears.
 - HTML emails are shown in a sandbox where scripts can't run.
+- Storage used isn't shown, because the Gmail API doesn't report it. Other languages aren't available yet.
+
+## Development
+
+There is no build step: plain HTML, CSS and JavaScript modules.
+
+```
+mail/
+  index.html            app shell and splash screen
+  css/tokens.css        colours, type, spacing and radii (light and dark)
+  css/base.css, components.css, layout.css
+  js/main.js            boot, navigation, account handling
+  js/gmail.js           Google sign-in and the Gmail API
+  js/mime.js            reading and building email messages
+  js/ui.js              shared components (EmailRow, Avatar, AttachmentCard, dialogs, sheets, toasts…)
+  js/views/             mailbox, reader, composer, search, settings, sign-in, attachment preview
+  tests/                end-to-end tests against an in-memory Gmail
+```
+
+Run the checks and tests (needs Node 18+):
+
+```
+cd mail
+npm install
+npm test
+```
