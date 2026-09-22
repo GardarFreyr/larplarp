@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mail">
+<meta name="description" content="A calm, minimal email client for Gmail.">
 <title>Mail</title>
 <link rel="icon" href="icons/logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -15,174 +17,26 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/layout.css">
+<script>
+  // Apply the saved theme before first paint so the splash never flashes the wrong colour.
+  try {
+    var t = (JSON.parse(localStorage.getItem('mail.prefs') || '{}').theme) || 'system';
+    if (t !== 'system') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
 <script src="config.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script type="module" src="js/main.js"></script>
 </head>
 <body>
-
-<!-- Loading screen -->
-<div id="splash" class="splash">
-  <img class="splash-logo" src="icons/logo.svg" alt="Mail">
-  <div class="spinner" aria-hidden="true"></div>
-  <div class="splash-text">Loading...</div>
-</div>
-
-<!-- Sign in -->
-<div id="login" class="login hidden">
-  <div class="login-card">
-    <img class="login-logo" src="icons/logo.svg" alt="">
-    <h1>Mail</h1>
-    <p class="login-sub">Sign in with your Gmail account to read and send email.</p>
-    <button id="signInBtn" class="btn btn-primary btn-block">
-      <svg viewBox="0 0 48 48" class="g-logo" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-      <span id="signInLabel">Sign in with Google</span>
-    </button>
-    <button id="switchAccountBtn" class="link-btn hidden">Use a different account</button>
-    <div id="clientIdBox" class="client-id-box hidden">
-      <label for="clientIdInput">Google OAuth Client ID</label>
-      <input id="clientIdInput" type="text" placeholder="1234567890-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
-      <p class="hint">One-time setup. See <a href="https://github.com/gardarfreyr/larplarp/blob/main/mail/README.md" target="_blank" rel="noopener">the setup guide</a> for how to create one (about 5 minutes).</p>
-    </div>
-    <p id="loginError" class="login-error hidden"></p>
+  <div class="splash" id="splash" role="img" aria-label="Mail">
+    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="15" width="46" height="34" rx="4.5"/><path d="M11 18l21 15.5L53 18"/></svg>
   </div>
-</div>
-
-<!-- Main app -->
-<div id="app" class="app hidden">
-  <aside class="sidebar">
-    <div class="brand">Mail</div>
-    <button class="btn btn-primary btn-compose" data-action="compose">
-      <svg class="ic"><use href="#i-compose"/></svg><span>Compose</span>
-    </button>
-    <nav class="folders" id="folderNav">
-      <button class="folder" data-folder="INBOX"><svg class="ic"><use href="#i-inbox"/></svg><span>Inbox</span><span class="badge hidden" id="inboxBadge"></span></button>
-      <button class="folder" data-folder="STARRED"><svg class="ic"><use href="#i-star"/></svg><span>Starred</span></button>
-      <button class="folder" data-folder="SENT"><svg class="ic"><use href="#i-send"/></svg><span>Sent</span></button>
-      <button class="folder" data-folder="DRAFT"><svg class="ic"><use href="#i-file"/></svg><span>Drafts</span></button>
-      <button class="folder" data-folder="TRASH"><svg class="ic"><use href="#i-trash"/></svg><span>Trash</span></button>
-    </nav>
-    <div class="sidebar-bottom">
-      <div class="account" id="accountEmail"></div>
-      <button class="folder" data-action="settings"><svg class="ic"><use href="#i-settings"/></svg><span>Settings</span></button>
-    </div>
-  </aside>
-
-  <section class="list-pane">
-    <header class="mobile-header">
-      <h1 id="mobileTitle">Mail</h1>
-      <button class="icon-btn" data-action="menu" aria-label="More"><svg class="ic"><use href="#i-more"/></svg></button>
-    </header>
-    <div class="search">
-      <svg class="ic"><use href="#i-search"/></svg>
-      <input id="searchInput" type="search" placeholder="Search emails..." autocomplete="off">
-    </div>
-    <div class="list-scroll" id="listScroll">
-      <div class="list-status" id="listStatus"></div>
-      <ul class="message-list" id="messageList"></ul>
-      <button class="load-more hidden" id="loadMoreBtn">Load more</button>
-    </div>
-  </section>
-
-  <main class="reader-pane" id="reader">
-    <div class="reader-toolbar">
-      <button class="icon-btn" data-action="back" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></button>
-      <div class="spacer"></div>
-      <button class="icon-btn" data-action="trash" aria-label="Delete"><svg class="ic"><use href="#i-trash"/></svg></button>
-      <button class="icon-btn" data-action="unread" aria-label="Mark as unread"><svg class="ic"><use href="#i-mail"/></svg></button>
-      <button class="icon-btn" data-action="reader-menu" aria-label="More"><svg class="ic"><use href="#i-more"/></svg></button>
-    </div>
-    <div class="reader-scroll" id="readerScroll">
-      <div class="reader-empty" id="readerEmpty">
-        <img src="icons/logo.svg" alt="">
-        <p>Select an email to read</p>
-      </div>
-      <article class="message hidden" id="messageView"></article>
-    </div>
-  </main>
-
-  <button class="fab" data-action="compose" aria-label="Compose"><svg class="ic"><use href="#i-pencil"/></svg></button>
-
-  <nav class="tabbar">
-    <button class="tab" data-folder="INBOX"><svg class="ic"><use href="#i-inbox"/></svg><span>Inbox</span></button>
-    <button class="tab" data-folder="STARRED"><svg class="ic"><use href="#i-star"/></svg><span>Starred</span></button>
-    <button class="tab" data-folder="SENT"><svg class="ic"><use href="#i-send"/></svg><span>Sent</span></button>
-    <button class="tab" data-folder="DRAFT"><svg class="ic"><use href="#i-file"/></svg><span>Drafts</span></button>
-    <button class="tab" data-action="menu"><svg class="ic"><use href="#i-more"/></svg><span>More</span></button>
-  </nav>
-</div>
-
-<!-- Compose -->
-<div class="overlay hidden" id="composeOverlay">
-  <form class="compose" id="composeForm" autocomplete="off">
-    <div class="compose-head">
-      <button type="button" class="icon-btn" data-action="close-compose" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button>
-      <h2 id="composeTitle">New message</h2>
-      <button type="submit" class="btn btn-primary btn-send" id="sendBtn"><svg class="ic"><use href="#i-send"/></svg><span>Send</span></button>
-    </div>
-    <label class="field"><span>To</span><input id="cTo" type="text" inputmode="email" required><button type="button" class="link-btn" id="ccToggle">Cc</button></label>
-    <label class="field hidden" id="ccRow"><span>Cc</span><input id="cCc" type="text" inputmode="email"></label>
-    <label class="field"><span>Subject</span><input id="cSubject" type="text"></label>
-    <textarea id="cBody" placeholder="Write your message..."></textarea>
-    <div class="compose-foot">
-      <button type="button" class="btn btn-ghost" data-action="save-draft">Save draft</button>
-      <button type="button" class="btn btn-ghost" data-action="discard">Discard</button>
-    </div>
-  </form>
-</div>
-
-<!-- Action sheet / menu -->
-<div class="overlay sheet-overlay hidden" id="sheetOverlay">
-  <div class="sheet" id="sheet"></div>
-</div>
-
-<!-- Settings -->
-<div class="overlay hidden" id="settingsOverlay">
-  <div class="dialog">
-    <div class="compose-head">
-      <button type="button" class="icon-btn" data-action="close-settings" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button>
-      <h2>Settings</h2>
-      <span></span>
-    </div>
-    <div class="dialog-body">
-      <div class="setting-row"><span class="muted">Signed in as</span><strong id="settingsEmail"></strong></div>
-      <label class="setting-label" for="settingsClientId">Google OAuth Client ID</label>
-      <input id="settingsClientId" type="text" spellcheck="false">
-      <button class="btn btn-ghost btn-block" data-action="save-client-id">Save Client ID</button>
-      <button class="btn btn-primary btn-block" data-action="signout"><svg class="ic"><use href="#i-logout"/></svg><span>Sign out</span></button>
-    </div>
-  </div>
-</div>
-
-<div class="toast hidden" id="toast"></div>
-
-<!-- Icons -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <symbol id="i-compose" viewBox="0 0 24 24"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 0 1 3 3L12.4 14.6a2 2 0 0 1-.9.5l-2.9.8a.5.5 0 0 1-.6-.6l.8-2.9a2 2 0 0 1 .5-.9z"/></symbol>
-    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
-    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5l2.94 5.96 6.56.95-4.75 4.63 1.12 6.54L12 17.5l-5.87 3.08 1.12-6.54L2.5 9.41l6.56-.95z"/></symbol>
-    <symbol id="i-send" viewBox="0 0 24 24"><path d="M3.7 3.05a.5.5 0 0 0-.68.63l2.84 7.62a2 2 0 0 1 0 1.4l-2.84 7.62a.5.5 0 0 0 .68.63l18-8.5a.5.5 0 0 0 0-.9z"/><path d="M6 12h16"/></symbol>
-    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
-    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></symbol>
-    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></symbol>
-    <symbol id="i-back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
-    <symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m2.5 6.5 9.5 7 9.5-7"/></symbol>
-    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></symbol>
-    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
-    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.17 6.81a2.82 2.82 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/></symbol>
-    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
-    <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 17l-5-5 5-5"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></symbol>
-    <symbol id="i-forward" viewBox="0 0 24 24"><path d="M15 17l5-5-5-5"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></symbol>
-    <symbol id="i-archive" viewBox="0 0 24 24"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
-    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
-    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
-    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
-    <symbol id="i-restore" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
-  </defs>
-</svg>
-
-<script src="app.js"></script>
+  <div class="app" id="app"></div>
+  <noscript><p style="padding:24px">Mail needs JavaScript to run.</p></noscript>
 </body>
 </html>

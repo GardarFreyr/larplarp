@@ -1,0 +1,109 @@
+/* Design tokens. Every colour, size and radius in the app comes from here. */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f5f5f5;      /* subtle filled surfaces: chips, cards, inputs */
+  --surface-3: #ececec;      /* pressed / selected */
+  --fg: #0f0f0f;
+  --fg-2: #3a3a3a;           /* secondary text */
+  --muted: #767676;          /* meta text, placeholders (4.5:1 on white) */
+  --border: #e8e8e8;
+  --border-strong: #d4d4d4;
+  --overlay: rgba(0, 0, 0, .32);
+  --primary: #0f0f0f;
+  --on-primary: #ffffff;
+  --danger: #d0342c;
+  --on-danger: #ffffff;
+  --focus: #0f0f0f;
+  --shadow-pop: 0 10px 40px rgba(0, 0, 0, .12);
+  --avatar-bg: #0f0f0f;
+  --avatar-fg: #ffffff;
+  --viewer-bg: #111111;
+  --viewer-fg: #f4f4f4;
+  --viewer-muted: #9a9a9a;
+
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --fs-xs: .75rem;    /* 12 */
+  --fs-sm: .8125rem;  /* 13 */
+  --fs-md: .9375rem;  /* 15 */
+  --fs-lg: 1.0625rem; /* 17 */
+  --fs-xl: 1.5rem;    /* 24 */
+  --fs-2xl: 1.875rem; /* 30 */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  --ic-sm: 16px;
+  --ic-md: 20px;
+  --ic-lg: 24px;
+  --touch: 44px;
+  --avatar: 44px;
+
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --ease: cubic-bezier(.2, .7, .2, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 58px;
+}
+
+/* Dark palette: follows the system unless the user picked Light in Settings. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0c0c0c;
+    --surface: #151515;
+    --surface-2: #1c1c1c;
+    --surface-3: #262626;
+    --fg: #f4f4f4;
+    --fg-2: #c9c9c9;
+    --muted: #8e8e8e;
+    --border: #232323;
+    --border-strong: #333333;
+    --overlay: rgba(0, 0, 0, .6);
+    --primary: #f4f4f4;
+    --on-primary: #0c0c0c;
+    --danger: #ef5b52;
+    --focus: #f4f4f4;
+    --shadow-pop: 0 10px 40px rgba(0, 0, 0, .5);
+    --avatar-bg: #2e2e2e;
+    --avatar-fg: #f4f4f4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c0c0c;
+  --surface: #151515;
+  --surface-2: #1c1c1c;
+  --surface-3: #262626;
+  --fg: #f4f4f4;
+  --fg-2: #c9c9c9;
+  --muted: #8e8e8e;
+  --border: #232323;
+  --border-strong: #333333;
+  --overlay: rgba(0, 0, 0, .6);
+  --primary: #f4f4f4;
+  --on-primary: #0c0c0c;
+  --danger: #ef5b52;
+  --focus: #f4f4f4;
+  --shadow-pop: 0 10px 40px rgba(0, 0, 0, .5);
+  --avatar-bg: #2e2e2e;
+  --avatar-fg: #f4f4f4;
+}
