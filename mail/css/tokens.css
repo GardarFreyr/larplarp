@@ -17,6 +17,11 @@
   --on-danger: #ffffff;
   --focus: #0f0f0f;
   --shadow-pop: 0 10px 40px rgba(0, 0, 0, .12);
+  --avatar-bg: #0f0f0f;
+  --avatar-fg: #ffffff;
+  --viewer-bg: #111111;
+  --viewer-fg: #f4f4f4;
+  --viewer-muted: #9a9a9a;
 
   --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --fs-xs: .75rem;    /* 12 */
@@ -78,6 +83,8 @@
     --danger: #ef5b52;
     --focus: #f4f4f4;
     --shadow-pop: 0 10px 40px rgba(0, 0, 0, .5);
+    --avatar-bg: #2e2e2e;
+    --avatar-fg: #f4f4f4;
   }
 }
 :root[data-theme="dark"] {
@@ -97,4 +104,6 @@
   --danger: #ef5b52;
   --focus: #f4f4f4;
   --shadow-pop: 0 10px 40px rgba(0, 0, 0, .5);
+  --avatar-bg: #2e2e2e;
+  --avatar-fg: #f4f4f4;
 }

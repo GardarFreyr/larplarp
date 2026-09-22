@@ -117,11 +117,24 @@ function notifications() {
     : status === 'denied'
       ? 'Notifications are blocked for this site. Allow them in your browser or system settings, then try again.'
       : 'You’ll be notified about new email in your Inbox while Mail is open, including in a background tab. Mail is a web app, so it can’t notify you after it’s closed. Tapping a notification opens the email.';
+  const log = store.notifications(state.email);
+  const startOfDay = new Date().setHours(0, 0, 0, 0);
+  const group = (title, items) => items.length ? `<h3 class="notif-group">${title}</h3><ul>${items.map((n) => `
+      <li><button type="button" class="notif-row" data-open="${e(n.id)}">
+        <span class="notif-icon">${icon('mail')}</span>
+        <span class="notif-text"><span class="notif-top"><strong>${e(n.from)}</strong><time>${e(ago(n.at))}</time></span>
+          <span class="notif-subject">${e(n.subject)}</span><span class="notif-snippet">${e(n.snippet)}</span></span>
+        ${icon('chevronRight', 'chev')}</button></li>`).join('')}</ul>` : '';
   return {
     title: 'Notifications',
     body: `${settingsSection('', [
       settingsRow({ kind: 'toggle', id: 'notify', iconName: 'bell', label: 'New email notifications', checked: on }),
-    ])}<p class="settings-note">${e(note)}</p>`,
+    ])}<p class="settings-note">${e(note)}</p>
+    <section class="settings-section notif-list">
+      <div class="notif-head"><h2>Recent notifications</h2>${log.length ? '<button type="button" class="btn btn-quiet" data-act="clear-notifs">Clear all</button>' : ''}</div>
+      ${log.length ? group('Today', log.filter((n) => n.at >= startOfDay)) + group('Earlier', log.filter((n) => n.at < startOfDay))
+        : '<p class="settings-note" style="margin:0">Notifications you receive will appear here.</p>'}
+    </section>`,
   };
 }
 
@@ -161,6 +174,14 @@ function privacy() {
   };
 }
 
+function ago(ms) {
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m ago`;
+  if (m < 1440) return `${Math.round(m / 60)}h ago`;
+  return `${Math.round(m / 1440)}d ago`;
+}
+
 // ---------------------------------------------------------------- input
 
 async function onClick(ev) {
@@ -170,6 +191,8 @@ async function onClick(ev) {
     render();
     return;
   }
+  const openBtn = ev.target.closest('[data-open]');
+  if (openBtn) { emit('open-message', { id: openBtn.dataset.open, from: 'mail' }); return; }
   const sw = ev.target.closest('[data-switch]');
   if (sw) { emit('switch-account', sw.dataset.switch); return; }
   const theme = ev.target.closest('[data-theme-choice]');
@@ -179,6 +202,7 @@ async function onClick(ev) {
   switch (act.dataset.act) {
     case 'add-account': emit('add-account'); break;
     case 'sign-out': emit('sign-out', { revoke: false }); break;
+    case 'clear-notifs': store.clearNotifications(state.email); render(); break;
     case 'save-client': {
       const v = $('#stClientId', pane).value.trim();
       if (!v) { toast('Enter a Client ID'); break; }
@@ -193,7 +217,7 @@ async function onClick(ev) {
     }
     case 'clear-data': {
       const ok = await confirmDialog({ title: 'Clear saved data?', body: 'Emails saved for offline use, recent searches and unsent drafts on this device will be removed.', actions: [{ label: 'Clear', value: true, kind: 'danger' }, { label: 'Cancel', value: false }] });
-      if (ok) { store.clearCache(); store.clearRecents(); store.setLocalDraft(null); toast('Saved data cleared'); }
+      if (ok) { store.clearCache(); store.clearRecents(); store.setLocalDraft(null); store.clearNotifications(state.email); toast('Saved data cleared'); }
       break;
     }
     case 'revoke': {

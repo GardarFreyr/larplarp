@@ -1,5 +1,6 @@
 // Search: Gmail's full-text search (sender, recipients, subject and body) plus filters.
 import * as gmail from '../gmail.js';
+import * as actions from '../actions.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { state, emit, on } from '../state.js';
@@ -140,6 +141,11 @@ async function run() {
 async function onClick(ev) {
   const t = ev.target;
   const row = t.closest('.row-wrap');
+  if (row && t.closest('[data-star]')) {
+    const m = rows.find((r) => r.id === row.dataset.id);
+    if (m) actions.setStar([m.id], !m.labelIds.includes('STARRED'));
+    return;
+  }
   if (row) {
     if (input.value.trim()) store.addRecent(input.value);
     emit('open-message', { id: row.dataset.id, from: 'search' });

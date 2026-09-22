@@ -8,6 +8,7 @@ const K = {
   outbox: 'mail.outbox',
   localDraft: 'mail.localDraft',
   listCache: 'mail.listCache',
+  notifications: 'mail.notifications',
 };
 
 function read(key, fallback) {
@@ -112,4 +113,9 @@ export const store = {
     if (!write(K.listCache, all)) write(K.listCache, { [key]: all[key] });
   },
   clearCache() { write(K.listCache, null); },
+
+  // --- notifications this app has shown (newest first)
+  notifications(account) { return read(K.notifications, []).filter((n) => n.account === account); },
+  addNotification(n) { write(K.notifications, [n, ...read(K.notifications, []).filter((x) => x.id !== n.id)].slice(0, 40)); },
+  clearNotifications(account) { write(K.notifications, read(K.notifications, []).filter((n) => n.account !== account)); },
 };

@@ -36,6 +36,7 @@ export async function checkForNewMail() {
       badge: 'icons/icon-192.png',
       data: { id: m.id },
     };
+    store.addNotification({ id: m.id, account: gmail.currentEmail(), from: title, subject: m.subject || '(no subject)', snippet: m.snippet || '', at: Date.now() });
     try {
       if (reg) await reg.showNotification(title, opts);
       else {

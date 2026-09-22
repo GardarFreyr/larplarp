@@ -22,7 +22,7 @@ export function mountMailbox(root) {
   pane.innerHTML = `
     <header class="pane-header is-mobile-only" id="mbHeader"></header>
     <div class="desk-search"><button type="button" class="searchbar" data-action="open-search" aria-label="Search emails">${icon('search')}<span>Search emails…</span></button></div>
-    <div class="chips" id="mbChips" role="toolbar" aria-label="Filter inbox"></div>
+    <div class="chips chips-tabs" id="mbChips" role="toolbar" aria-label="Filter inbox"></div>
     <div id="mbBanner"></div>
     <div class="pane-scroll" id="mbScroll">
       <div id="mbStatus"></div>
@@ -171,7 +171,7 @@ function renderRows() {
   if (offline) {
     statusEl.innerHTML = emptyState({ iconName: 'wifiOff', title: 'No connection', text: 'Check your internet connection and try again.', action: { id: 'retry', label: 'Try again', icon: 'refresh' } });
   } else if (state.folder === 'INBOX' && state.filter === 'all') {
-    statusEl.innerHTML = emptyState({ iconName: 'mail', title: 'You’re all caught up!', text: 'No new emails in your inbox.', action: { id: 'compose', label: 'Compose email', icon: 'pencil' } });
+    statusEl.innerHTML = emptyState({ iconName: 'mail', title: 'You’re all caught up!', text: 'No new emails in your inbox.', action: { id: 'compose', label: 'Compose email', icon: 'compose' } });
   } else {
     const what = state.folder === 'INBOX' ? INBOX_FILTERS[state.filter].label.toLowerCase() : mailboxTitle().toLowerCase();
     statusEl.innerHTML = emptyState({ iconName: FOLDERS[state.folder].icon, title: `No ${what} emails`, text: state.folder === 'TRASH' ? 'Deleted emails appear here for 30 days.' : '' });
@@ -284,6 +284,12 @@ function rowAction(id, action) {
 function onClick(ev) {
   const t = ev.target;
   const wrap = t.closest('.row-wrap');
+  const starBtn = t.closest('[data-star]');
+  if (wrap && starBtn && !selecting) {
+    const m = rows.find((r) => r.id === wrap.dataset.id);
+    if (m) actions.setStar([m.id], !m.labelIds.includes('STARRED'));
+    return;
+  }
   if (wrap && t.closest('.email-row')) {
     if (wrap.dataset.suppressClick) { delete wrap.dataset.suppressClick; return; }
     const id = wrap.dataset.id;

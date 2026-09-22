@@ -5,7 +5,7 @@ import { icon, logo } from '../icons.js';
 import { state, on, emit, FOLDERS } from '../state.js';
 import { $, avatar, attachmentCard, emptyState, loadingBlock, sheet, toast } from '../ui.js';
 import { escapeHtml as e, linkify, parseAddress, parseAddressList, displayName, fullDate, listDate } from '../format.js';
-import { openAttachment, downloadAttachment } from './preview.js';
+import { openAttachment, downloadAttachment, shareAttachment, canShare } from './preview.js';
 
 let pane, scroller, current = null, from = 'mail', seq = 0;
 
@@ -129,7 +129,7 @@ function render(m) {
     <div class="msg-body" id="rdBody"></div>
     ${m.attachments.length ? `<section class="msg-attach" aria-label="Attachments">
       <div class="msg-attach-head"><span>${m.attachments.length} attachment${m.attachments.length > 1 ? 's' : ''}</span>
-      ${m.attachments.length > 1 ? `<button type="button" class="link-btn" data-action="download-all">Download all</button>` : ''}</div>
+      ${m.attachments.length > 1 ? `<button type="button" class="link-btn dl-all" data-action="download-all">${icon('download')}<span>Download all</span></button>` : ''}</div>
       <div class="attachments">${m.attachments.map((a, i) => attachmentCard(a, i)).join('')}</div></section>` : ''}
     <div class="msg-actions">
       <button type="button" class="tile-btn" data-action="reply">${icon('reply')}<span>Reply</span></button>
@@ -175,6 +175,8 @@ function renderBody(m, target) {
 }
 
 function onClick(ev) {
+  const menuBtn = ev.target.closest('[data-attach-menu]');
+  if (menuBtn && current) { attachmentMenu(current, current.attachments[Number(menuBtn.dataset.attachMenu)]); return; }
   const card = ev.target.closest('[data-attach]');
   if (card && current) { openAttachment(current, current.attachments[Number(card.dataset.attach)]); return; }
   const a = ev.target.closest('[data-action]');
@@ -205,6 +207,17 @@ function onClick(ev) {
     case 'forward': if (m) emit('compose', { mode: 'forward', message: m }); break;
     case 'download-all': if (m) downloadAll(m); break;
   }
+}
+
+function attachmentMenu(m, att) {
+  sheet({
+    title: att.filename,
+    items: [
+      { label: 'Preview', icon: 'search', run: () => openAttachment(m, att) },
+      { label: 'Download', icon: 'download', run: () => downloadAttachment(m, att) },
+      canShare() ? { label: 'Share', icon: 'share', run: () => shareAttachment(m, att) } : null,
+    ],
+  });
 }
 
 async function downloadAll(m) {

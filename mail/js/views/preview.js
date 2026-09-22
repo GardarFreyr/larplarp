@@ -1,5 +1,5 @@
-// Attachment preview. Images and PDFs use the browser's own renderers;
-// other files are opened or downloaded with the system's handlers.
+// Attachment preview. Images and PDFs use the browser's own renderers (PDF pages,
+// zoom and printing come from the built-in viewer); other files open with the system.
 import * as gmail from '../gmail.js';
 import { icon } from '../icons.js';
 import { $, html, pushLayer, toast } from '../ui.js';
@@ -26,23 +26,36 @@ function reportError(err) {
   toast(err instanceof gmail.NetworkError ? 'No connection. The attachment couldn’t be downloaded.' : 'Couldn’t download the attachment.');
 }
 
+export const canShare = () => typeof navigator.canShare === 'function';
+
 export async function downloadAttachment(message, att) {
   try { saveBlob(await blobFor(message, att), att.filename); } catch (err) { reportError(err); }
 }
 
-const canShareFiles = (file) => !!(navigator.canShare && navigator.canShare({ files: [file] }));
+async function shareBlob(blob, name) {
+  const file = new File([blob], name, { type: blob.type });
+  if (!navigator.canShare?.({ files: [file] })) { toast('Sharing this file isn’t supported here. Download it instead.'); return; }
+  try { await navigator.share({ files: [file], title: name }); } catch {}
+}
+
+export async function shareAttachment(message, att) {
+  try { await shareBlob(await blobFor(message, att), att.filename); } catch (err) { reportError(err); }
+}
 
 export async function openAttachment(message, att) {
   const kind = fileKind(att.mimeType, att.filename);
   const view = html(`<div class="preview" role="dialog" aria-modal="true" aria-label="${e(att.filename)}">
     <div class="preview-bar">
-      <button type="button" class="icon-btn" data-p="close" aria-label="Close preview">${icon('x')}</button>
-      <div class="preview-name">${e(att.filename)} <span class="muted">${e(fileSize(att.size))}</span></div>
-      <button type="button" class="icon-btn" data-p="share" aria-label="Share" hidden>${icon('share')}</button>
-      ${kind === 'pdf' ? `<button type="button" class="icon-btn" data-p="open" aria-label="Open, print or view all pages">${icon('printer')}</button>` : ''}
-      <button type="button" class="icon-btn" data-p="download" aria-label="Download">${icon('download')}</button>
+      <button type="button" class="icon-btn" data-p="close" aria-label="Back">${icon('chevronLeft', 'ic-lg')}</button>
+      <div class="preview-title"><div class="preview-name">${e(att.filename)}</div><div class="preview-size">${e(fileSize(att.size))}</div></div>
     </div>
     <div class="preview-body"><div class="spinner" aria-label="Loading"></div></div>
+    <div class="preview-actions">
+      ${canShare() ? `<button type="button" data-p="share" disabled>${icon('share')}<span>Share</span></button>` : ''}
+      <button type="button" data-p="download" disabled>${icon('download')}<span>Download</span></button>
+      <button type="button" data-p="open" disabled>${icon('external')}<span>Open in…</span></button>
+      ${kind === 'pdf' ? `<button type="button" data-p="print" disabled>${icon('printer')}<span>Print</span></button>` : ''}
+    </div>
   </div>`);
   let url = null;
   let blob = null;
@@ -51,15 +64,17 @@ export async function openAttachment(message, att) {
   document.body.append(view);
   $('[data-p="close"]', view).focus();
 
-  view.addEventListener('click', async (ev) => {
+  view.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-p]');
     if (!b) return;
-    if (b.dataset.p === 'close') close();
+    if (b.dataset.p === 'close') { close(); return; }
     if (!blob) return;
     if (b.dataset.p === 'download') saveBlob(blob, att.filename);
     if (b.dataset.p === 'open') window.open(url, '_blank', 'noopener');
-    if (b.dataset.p === 'share') {
-      try { await navigator.share({ files: [new File([blob], att.filename, { type: blob.type })], title: att.filename }); } catch {}
+    if (b.dataset.p === 'share') shareBlob(blob, att.filename);
+    if (b.dataset.p === 'print') {
+      const frame = $('iframe', view);
+      try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch { window.open(url, '_blank', 'noopener'); }
     }
   });
 
@@ -71,18 +86,16 @@ export async function openAttachment(message, att) {
   }
   if (!view.isConnected) return;
   url = URL.createObjectURL(blob);
-  if (canShareFiles(new File([blob], att.filename, { type: blob.type }))) $('[data-p="share"]', view).hidden = false;
+  view.querySelectorAll('.preview-actions button').forEach((b) => { b.disabled = false; });
   const body = $('.preview-body', view);
   if (kind === 'image') {
     body.innerHTML = `<img alt="${e(att.filename)}">`;
     $('img', body).src = url;
   } else if (kind === 'pdf') {
-    // The browser's PDF viewer provides pages, zoom and printing.
     body.innerHTML = `<iframe title="${e(att.filename)}"></iframe>`;
     $('iframe', body).src = url;
   } else {
     body.innerHTML = `<div class="empty">${icon('file')}<h2>${e(att.filename)}</h2>
-      <p>This file type can’t be previewed here. Open it with another app or download it.</p>
-      <button type="button" class="btn btn-primary" data-p="open">${icon('external')}Open</button></div>`;
+      <p>This file can’t be previewed in the browser. Use “Open in…” to view it with another app, or download it.</p></div>`;
   }
 }

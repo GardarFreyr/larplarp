@@ -51,7 +51,7 @@ function buildShell() {
     <section class="pane search-pane" id="searchPane" aria-label="Search"></section>
     <main class="pane reader-pane is-empty" id="readerPane" aria-label="Message"></main>
     <section class="pane settings-pane" id="settingsPane" aria-label="Settings"></section>
-    <button type="button" class="fab" data-action="compose" aria-label="Compose">${icon('pencil')}</button>
+    <button type="button" class="fab" data-action="compose" aria-label="Compose">${icon('compose')}</button>
     <nav class="tabbar" aria-label="Main">
       <button type="button" class="tab" data-screen-btn="mail">${icon('mail')}<span>Inbox</span></button>
       <button type="button" class="tab" data-screen-btn="search">${icon('search')}<span>Search</span></button>

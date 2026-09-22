@@ -263,6 +263,58 @@ await test('multi-select and bulk archive', async () => {
   await context.close();
 });
 
+await test('row star toggles without opening the email', async () => {
+  const { page, mock, context } = await setup();
+  await page.click('.row-wrap[data-id="m3"] [data-star]');
+  await page.waitForSelector('.row-wrap[data-id="m3"] .row-star.is-on');
+  assert(mock.db.messages[3].labelIds.includes('STARRED'), 'not starred in Gmail');
+  assert(!(await page.$('#rdSubject')), 'email should not open');
+  await context.close();
+});
+
+await test('attachment preview with Download / Open in… / Print', async () => {
+  const { page, context } = await setup({ mobile: true });
+  await page.click('.row-wrap[data-id="m0"] .email-row');
+  await page.click('[data-attach="0"]');
+  await page.waitForSelector('.preview iframe');
+  assert(!(await page.isDisabled('[data-p="download"]')), 'download should be enabled');
+  assert(await page.$('[data-p="print"]'), 'PDF should offer Print');
+  await page.waitForTimeout(300);
+  await shot(page, 'mobile-preview');
+  await page.click('[data-p="close"]');
+  await page.click('[data-attach-menu="0"]');
+  await page.waitForSelector('.sheet >> text=Download');
+  await context.close();
+});
+
+await test('new mail notifications are shown and listed in Settings', async () => {
+  const { page, mock, context } = await setup();
+  // Headless Chromium always denies notifications, so stand in for the browser API.
+  await page.addInitScript(() => {
+    window.__shown = [];
+    window.Notification = class { constructor(title, opts) { window.__shown.push(title); } static get permission() { return 'granted'; } static requestPermission() { return Promise.resolve('granted'); } };
+  });
+  await page.evaluate(() => localStorage.setItem('mail.prefs', JSON.stringify({ notify: true })));
+  await page.reload();
+  await page.waitForSelector('#mbList .row-wrap');
+  await page.waitForTimeout(300);
+  assert((await page.evaluate(() => Notification.permission)) === 'granted', 'permission not granted');
+  const fresh = JSON.parse(JSON.stringify(mock.db.messages[3]));
+  Object.assign(fresh, { id: 'm99', threadId: 't99', internalDate: String(Date.now()), labelIds: ['INBOX', 'UNREAD'] });
+  fresh.payload.headers = fresh.payload.headers.map((h) => (h.name === 'Subject' ? { ...h, value: 'Brand new' } : h));
+  mock.db.messages.unshift(fresh);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  await page.waitForFunction(() => (localStorage.getItem('mail.notifications') || '').includes('Brand new'), null, { timeout: 5000 });
+  assert((await page.evaluate(() => window.__shown)).includes('Mom'), 'system notification not shown');
+  await page.click('.sidebar [data-screen-btn="settings"]');
+  await page.click('[data-nav="notifications"]');
+  await page.waitForSelector('.notif-row >> text=Brand new');
+  await shot(page, 'desktop-notifications');
+  await page.click('[data-act="clear-notifs"]');
+  assert(!(await page.$('.notif-row')), 'clear all failed');
+  await context.close();
+});
+
 await test('mobile: layout, open email, back, swipe right to archive', async () => {
   const { page, mock, context } = await setup({ mobile: true });
   await shot(page, 'mobile-inbox');

@@ -124,11 +124,12 @@ export function emailRow(m, { who = 'from', current = false, selected = false } 
       <div class="row-main">
         <div class="row-top">
           <span class="row-from">${e(name)}</span>
-          <span class="row-meta">${m.hasAttachment ? icon('clip') : ''}${starred ? icon('star', 'is-star') : ''}<time>${e(listDate(m.date))}</time></span>
+          <span class="row-meta">${m.hasAttachment ? `${icon('clip')}<span class="sr-only">Has attachment</span>` : ''}<time>${e(listDate(m.date))}</time></span>
         </div>
         <div class="row-subject">${e(m.subject || '(no subject)')}</div>
         <div class="row-preview">${e(m.snippet || '')}</div>
       </div>
+      ${m.draftId || m.labelIds.includes('TRASH') ? '' : `<button type="button" class="icon-btn row-star${starred ? ' is-on' : ''}" data-star aria-pressed="${starred}" aria-label="${starred ? 'Remove star' : 'Star'}">${icon('star')}</button>`}
     </div></li>`;
 }
 
@@ -138,7 +139,7 @@ export function attachmentCard(att, index, { removable = false, pending = false,
   const lead = thumb ? `<img class="thumb" src="${thumb}" alt="">` : icon(kind === 'image' ? 'image' : kind === 'pdf' ? 'fileText' : 'file', 'ic-type');
   const action = removable
     ? `<button type="button" class="icon-btn attach-remove" data-remove="${index}" aria-label="Remove ${e(name)}">${icon('x', 'ic-sm')}</button>`
-    : `<span class="icon-btn" aria-hidden="true">${icon('download')}</span>`;
+    : `<button type="button" class="icon-btn" data-attach-menu="${index}" aria-label="More options for ${e(name)}">${icon('moreV')}</button>`;
   return `<div class="attach-card${pending ? ' is-pending' : ''}" ${removable ? '' : `role="button" tabindex="0" data-attach="${index}"`}
       aria-label="${e(name)}, ${e(fileSize(att.size))}">
       ${lead}<div class="attach-info"><div class="attach-name">${e(name)}</div><div class="attach-size">${pending ? 'Loading…' : e(fileSize(att.size))}</div></div>${action}

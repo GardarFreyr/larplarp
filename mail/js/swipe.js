@@ -33,7 +33,7 @@ export function attachSwipe(list, opts) {
     wrap.insertAdjacentHTML('afterbegin',
       `<div class="swipe-bg swipe-left-bg" aria-hidden="true">${icon(d.archivable ? 'archive' : 'inbox')}<span>${d.archiveLabel}</span></div>
        <div class="swipe-bg swipe-actions">
-         <button type="button" data-swipe="read" tabindex="-1">${icon(d.unread ? 'mailOpen' : 'mail')}<span>${d.unread ? 'Read' : 'Unread'}</span></button>
+         <button type="button" data-swipe="read" tabindex="-1">${icon(d.unread ? 'mailOpen' : 'mail')}<span>${d.unread ? 'Mark read' : 'Mark unread'}</span></button>
          <button type="button" data-swipe="star" tabindex="-1">${icon('star')}<span>${d.starred ? 'Unstar' : 'Star'}</span></button>
          <button type="button" data-swipe="delete" class="is-danger" tabindex="-1">${icon('trash')}<span>Delete</span></button>
        </div>`);

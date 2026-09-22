@@ -46,10 +46,15 @@
 .chip {
   display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
   height: 36px; padding: 0 14px; border-radius: var(--r-pill);
-  border: 1px solid var(--border); font-size: var(--fs-sm); font-weight: var(--fw-medium);
-  color: var(--fg-2); transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  background: var(--surface-2); font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  color: var(--fg-2); transition: background var(--dur-fast), color var(--dur-fast);
 }
-.chip:hover { background: var(--surface-2); }
+.chip:hover { background: var(--surface-3); }
+/* Inbox filters: quiet text tabs, the selected one on a soft pill. */
+.chips-tabs { justify-content: space-between; padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border); }
+.chips-tabs .chip { background: transparent; color: var(--fg); font-weight: var(--fw-regular); font-size: .875rem; padding: 0 16px; }
+.chips-tabs .chip:hover { background: var(--surface-2); }
+.chips-tabs .chip[aria-pressed="true"] { background: var(--surface-3); color: var(--fg); border: 0; font-weight: var(--fw-medium); }
 .chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .chip .ic { width: 14px; height: 14px; }
 
@@ -57,7 +62,7 @@
 .avatar {
   display: grid; place-items: center; flex-shrink: 0;
   width: var(--avatar); height: var(--avatar); border-radius: 50%;
-  background: var(--primary); color: var(--on-primary);
+  background: var(--avatar-bg); color: var(--avatar-fg);
   font-size: .9375rem; font-weight: var(--fw-medium); letter-spacing: .02em;
   transition: background var(--dur-fast);
 }
@@ -89,6 +94,11 @@
 .row-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; color: var(--muted); font-size: var(--fs-sm); }
 .row-meta .ic { width: 15px; height: 15px; }
 .row-meta .is-star { fill: currentColor; color: var(--fg); }
+.row-star { position: absolute; right: 6px; bottom: 8px; width: 40px; height: 40px; color: var(--muted); }
+.row-star.is-on { color: var(--fg); }
+.row-star.is-on .ic { fill: currentColor; }
+.is-selecting .row-star { visibility: hidden; }
+.row-subject, .row-preview { padding-right: 36px; }
 .row-subject { font-size: .875rem; color: var(--fg); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-preview { font-size: .875rem; color: var(--muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .email-row.is-unread .row-from { font-weight: var(--fw-bold); }
@@ -143,7 +153,7 @@ button.searchbar { text-align: left; font-size: var(--fs-md); }
 .attach-info { flex: 1; min-width: 0; }
 .attach-name { font-size: .875rem; font-weight: var(--fw-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attach-size { font-size: var(--fs-xs); color: var(--muted); }
-.attach-card .icon-btn { width: 36px; height: 36px; }
+.attach-card .icon-btn { width: 36px; height: 36px; color: var(--fg-2); }
 .attach-card.is-pending { opacity: .6; }
 .attach-remove { width: 32px; height: 32px; }
 
